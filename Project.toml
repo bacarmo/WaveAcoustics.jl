@@ -1,0 +1,13 @@
+name = "WaveAcoustics"
+uuid = "015e6fd1-d146-4073-8025-2809e47f770e"
+authors = ["Bruno Alves do Carmo <bruno.carmo@ppgi.ufrj.br>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.12"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

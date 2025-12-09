@@ -1,0 +1,10 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.12.2"
+manifest_format = "2.0"
+project_hash = "0174af3fb55ad27f5af460ae0aa3771fad84f510"
+
+[[deps.WaveAcoustics]]
+path = "."
+uuid = "015e6fd1-d146-4073-8025-2809e47f770e"
+version = "1.0.0-DEV"
