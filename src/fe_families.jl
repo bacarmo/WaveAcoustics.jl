@@ -28,10 +28,10 @@ Return number of local DOFs for the finite element family.
 
 # Examples
 ```jldoctest
-julia> num_local_dof(Lagrange{2,3}())
+julia> WaveAcoustics.num_local_dof(Lagrange{2,3}())
 16
 
-julia> num_local_dof(Hermite{1,3}())
+julia> WaveAcoustics.num_local_dof(Hermite{1,3}())
 4
 ```
 """
