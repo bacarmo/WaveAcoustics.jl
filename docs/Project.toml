@@ -1,6 +1,3 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-WaveAcoustics = "015e6fd1-d146-4073-8025-2809e47f770e"
-
-[sources]
-WaveAcoustics = {path = ".."}
+LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
