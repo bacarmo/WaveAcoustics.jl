@@ -1,9 +1,13 @@
 name = "WaveAcoustics"
 uuid = "015e6fd1-d146-4073-8025-2809e47f770e"
-authors = ["Bruno Alves do Carmo <bruno.carmo@ppgi.ufrj.br>"]
 version = "1.0.0-DEV"
+authors = ["Bruno Alves do Carmo <bruno.carmo@ppgi.ufrj.br>"]
+
+[deps]
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+StaticArrays = "1.9.15"
 julia = "1.12"
 
 [extras]
@@ -11,3 +15,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test"]
+
+[workspace]
+projects = ["docs"]
