@@ -10,6 +10,7 @@ export LeftRight, LeftRightBottomTop, LeftRightTop
 # Includes
 include("fe_families.jl")
 include("boundary_conditions.jl")
+include("basis_functions.jl")
 include("mesh.jl")
 include("dof_map.jl")
 
