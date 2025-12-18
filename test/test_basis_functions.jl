@@ -200,6 +200,41 @@ end
 end
 
 # =============================================================================
+# 2D Lagrange, Degree 3
+# =============================================================================
+@testitem "2D Lagrange, Degree 3: functions" begin
+    using WaveAcoustics: Lagrange, basis_functions
+
+    # Node values: ϕᵢ(node_j) = δᵢⱼ
+    #   13 -- 14 -- 15 -- 16
+    #   |     |     |     |
+    #   9  -- 10 -- 11 -- 12
+    #   |     |     |     |
+    #   5  -- 6  -- 7  -- 8
+    #   |     |     |     |
+    #   1  -- 2  -- 3  -- 4
+    coords = [-1.0, -1 / 3, 1 / 3, 1.0]
+    nodes = [(coords[i], coords[j])
+             for j in 1:4 for i in 1:4]
+    for (i, (ξ, η)) in enumerate(nodes)
+        result = basis_functions(Lagrange{2, 3}(), ξ, η)
+        expected = zeros(16)
+        expected[i] = 1.0
+        @test result ≈ expected
+    end
+
+    # Partition of unity
+    @test sum(basis_functions(Lagrange{2, 3}(), -0.5, -0.3)) ≈ 1.0
+    @test sum(basis_functions(Lagrange{2, 3}(), 0.7, 0.4)) ≈ 1.0
+
+    # Test type
+    vec64 = basis_functions(Lagrange{2, 3}(), 0.0, 0.0)
+    vec32 = basis_functions(Lagrange{2, 3}(), Float32(0.0), Float32(0.0))
+    @test eltype(vec64) == Float64
+    @test eltype(vec32) == Float32
+end
+
+# =============================================================================
 # 1D Hermite, Degree 3
 # =============================================================================
 @testitem "1D Hermite, Degree 3: functions" begin
