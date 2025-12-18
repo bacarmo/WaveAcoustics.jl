@@ -171,29 +171,22 @@ end
     using WaveAcoustics: Lagrange, basis_functions
 
     # Node values: ϕᵢ(node_j) = δᵢⱼ
-    # 1th layer: 1:(−1,-1), 2:(0,-1), 3:(+1,-1)
-    @test basis_functions(Lagrange{2, 2}(), -1.0, -1.0) ≈
-          [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    @test basis_functions(Lagrange{2, 2}(), 0.0, -1.0) ≈
-          [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    @test basis_functions(Lagrange{2, 2}(), 1.0, -1.0) ≈
-          [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-    # 2th layer: 1:(−1,0), 2:(0,0), 3:(+1,0)
-    @test basis_functions(Lagrange{2, 2}(), -1.0, 0.0) ≈
-          [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    @test basis_functions(Lagrange{2, 2}(), 0.0, 0.0) ≈
-          [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
-    @test basis_functions(Lagrange{2, 2}(), 1.0, 0.0) ≈
-          [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-
-    # 3th layer: 1:(−1,+1), 2:(0,+1), 3:(+1,+1)
-    @test basis_functions(Lagrange{2, 2}(), -1.0, 1.0) ≈
-          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-    @test basis_functions(Lagrange{2, 2}(), 0.0, 1.0) ≈
-          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
-    @test basis_functions(Lagrange{2, 2}(), 1.0, 1.0) ≈
-          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    #    7 --- 8 --- 9
+    #    |     |     |
+    #    4 --- 5 --- 6
+    #    |     |     |
+    #    1 --- 2 --- 3
+    nodes = [
+        (-1.0, -1.0), (0.0, -1.0), (1.0, -1.0),  # layer 1
+        (-1.0, 0.0), (0.0, 0.0), (1.0, 0.0),  # layer 2
+        (-1.0, 1.0), (0.0, 1.0), (1.0, 1.0)   # layer 3
+    ]
+    for (i, (ξ, η)) in enumerate(nodes)
+        result = basis_functions(Lagrange{2, 2}(), ξ, η)
+        expected = zeros(9)
+        expected[i] = 1.0
+        @test result ≈ expected
+    end
 
     # Partition of unity
     @test sum(basis_functions(Lagrange{2, 2}(), -0.5, -0.3)) ≈ 1.0
