@@ -289,14 +289,13 @@ Bicubic Hermite basis functions on the reference square [-1,1] × [-1,1].
 # Returns
 - `SVector{16,T}`: Values of all 16 basis functions
 
-# Associate Node Layout
+# Node Layout
 ```
  9:12 ---- 13:16
   |          |
   |          |
  1:4  ----  5:8
-
-# Notes
+```
 Each corner node has 4 DOFs: (u, ∂u/∂ξ, ∂u/∂η, ∂²u/∂ξ∂η)
 """
 @inline function basis_functions(::Hermite{2, 3}, ξ::T, η::T) where {T <: Real}
