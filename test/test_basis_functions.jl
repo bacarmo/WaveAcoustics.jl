@@ -266,3 +266,123 @@ end
     @test eltype(vec32_ξ) == Float32
     @test eltype(vec32_η) == Float32
 end
+
+# =============================================================================
+# 2D Hermite, Degree 3
+# =============================================================================
+@testitem "2D Hermite, Degree 3: functions" begin
+    using WaveAcoustics: Hermite, basis_functions
+
+    # Each node has 4 DOFs: (u, ∂u/∂ξ, ∂u/∂η, ∂²u/∂ξ∂η)
+    # NODE 1: indices 1:4   at (ξ,η) = (-1,-1)
+    # NODE 2: indices 5:8   at (ξ,η) = (+1,-1)
+    # NODE 3: indices 9:12  at (ξ,η) = (-1,+1)
+    # NODE 4: indices 13:16 at (ξ,η) = (+1,+1)
+
+    # Test NODE 1 at (-1,-1): only first DOF (u) should be 1
+    ϕ_node1 = basis_functions(Hermite{2, 3}(), -1.0, -1.0)
+    @test ϕ_node1[1] ≈ 1.0
+    @test ϕ_node1[2] ≈ 0.0
+    @test ϕ_node1[3] ≈ 0.0
+    @test ϕ_node1[4] ≈ 0.0
+    @test all(ϕ_node1[5:16] .≈ 0.0)
+
+    # Test NODE 2 at (+1,-1): only fifth DOF (u at node 2) should be 1
+    ϕ_node2 = basis_functions(Hermite{2, 3}(), 1.0, -1.0)
+    @test all(ϕ_node2[1:4] .≈ 0.0)
+    @test ϕ_node2[5] ≈ 1.0
+    @test ϕ_node2[6] ≈ 0.0
+    @test ϕ_node2[7] ≈ 0.0
+    @test ϕ_node2[8] ≈ 0.0
+    @test all(ϕ_node2[9:16] .≈ 0.0)
+
+    # Test NODE 3 at (-1,+1): only ninth DOF (u at node 3) should be 1
+    ϕ_node3 = basis_functions(Hermite{2, 3}(), -1.0, 1.0)
+    @test all(ϕ_node3[1:8] .≈ 0.0)
+    @test ϕ_node3[9] ≈ 1.0
+    @test ϕ_node3[10] ≈ 0.0
+    @test ϕ_node3[11] ≈ 0.0
+    @test ϕ_node3[12] ≈ 0.0
+    @test all(ϕ_node3[13:16] .≈ 0.0)
+
+    # Test NODE 4 at (+1,+1): only thirteenth DOF (u at node 4) should be 1
+    ϕ_node4 = basis_functions(Hermite{2, 3}(), 1.0, 1.0)
+    @test all(ϕ_node4[1:12] .≈ 0.0)
+    @test ϕ_node4[13] ≈ 1.0
+    @test ϕ_node4[14] ≈ 0.0
+    @test ϕ_node4[15] ≈ 0.0
+    @test ϕ_node4[16] ≈ 0.0
+
+    # Test type preservation
+    vec64 = basis_functions(Hermite{2, 3}(), 0.0, 0.0)
+    vec32 = basis_functions(Hermite{2, 3}(), Float32(0.0), Float32(0.0))
+    @test eltype(vec64) == Float64
+    @test eltype(vec32) == Float32
+end
+
+@testitem "2D Hermite, Degree 3: derivatives" begin
+    using WaveAcoustics: Hermite, basis_functions_derivatives
+
+    # Each node has 4 DOFs: (u, ∂u/∂ξ, ∂u/∂η, ∂²u/∂ξ∂η)
+    # Test that derivatives satisfy Kronecker delta property
+
+    # Test NODE 1 at (-1,-1): ∂/∂ξ of second DOF should be 1
+    dϕ_dξ, dϕ_dη = basis_functions_derivatives(Hermite{2, 3}(), -1.0, -1.0)
+    @test dϕ_dξ[1] ≈ 0.0
+    @test dϕ_dξ[2] ≈ 1.0
+    @test dϕ_dξ[3] ≈ 0.0
+    @test dϕ_dξ[4] ≈ 0.0
+    @test all(dϕ_dξ[5:16] .≈ 0.0)
+
+    @test dϕ_dη[1] ≈ 0.0
+    @test dϕ_dη[2] ≈ 0.0
+    @test dϕ_dη[3] ≈ 1.0
+    @test dϕ_dη[4] ≈ 0.0
+    @test all(dϕ_dη[5:16] .≈ 0.0)
+
+    # Test NODE 2 at (+1,-1): ∂/∂ξ of sixth DOF should be 1
+    dϕ_dξ, dϕ_dη = basis_functions_derivatives(Hermite{2, 3}(), 1.0, -1.0)
+    @test all(dϕ_dξ[1:5] .≈ 0.0)
+    @test dϕ_dξ[6] ≈ 1.0
+    @test dϕ_dξ[7] ≈ 0.0
+    @test dϕ_dξ[8] ≈ 0.0
+    @test all(dϕ_dξ[9:16] .≈ 0.0)
+
+    @test all(dϕ_dη[1:6] .≈ 0.0)
+    @test dϕ_dη[7] ≈ 1.0
+    @test dϕ_dη[8] ≈ 0.0
+    @test all(dϕ_dη[9:16] .≈ 0.0)
+
+    # Test NODE 3 at (-1,+1): ∂/∂ξ of tenth DOF should be 1
+    dϕ_dξ, dϕ_dη = basis_functions_derivatives(Hermite{2, 3}(), -1.0, 1.0)
+    @test all(dϕ_dξ[1:9] .≈ 0.0)
+    @test dϕ_dξ[10] ≈ 1.0
+    @test dϕ_dξ[11] ≈ 0.0
+    @test dϕ_dξ[12] ≈ 0.0
+    @test all(dϕ_dξ[13:16] .≈ 0.0)
+
+    @test all(dϕ_dη[1:10] .≈ 0.0)
+    @test dϕ_dη[11] ≈ 1.0
+    @test dϕ_dη[12] ≈ 0.0
+    @test all(dϕ_dη[13:16] .≈ 0.0)
+
+    # Test NODE 4 at (+1,+1): ∂/∂ξ of fourteenth DOF should be 1
+    dϕ_dξ, dϕ_dη = basis_functions_derivatives(Hermite{2, 3}(), 1.0, 1.0)
+    @test all(dϕ_dξ[1:13] .≈ 0.0)
+    @test dϕ_dξ[14] ≈ 1.0
+    @test dϕ_dξ[15] ≈ 0.0
+    @test dϕ_dξ[16] ≈ 0.0
+
+    @test all(dϕ_dη[1:14] .≈ 0.0)
+    @test dϕ_dη[15] ≈ 1.0
+    @test dϕ_dη[16] ≈ 0.0
+
+    # Test type preservation
+    dϕ_dξ_64, dϕ_dη_64 = basis_functions_derivatives(Hermite{2, 3}(), 0.0, 0.0)
+    dϕ_dξ_32, dϕ_dη_32 = basis_functions_derivatives(
+        Hermite{2, 3}(), Float32(0.0), Float32(0.0))
+    @test eltype(dϕ_dξ_64) == Float64
+    @test eltype(dϕ_dη_64) == Float64
+    @test eltype(dϕ_dξ_32) == Float32
+    @test eltype(dϕ_dη_32) == Float32
+end

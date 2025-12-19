@@ -297,17 +297,39 @@ Bicubic Hermite basis functions on the reference square [-1,1] × [-1,1].
  1:4  ----  5:8
 
 # Notes
-Each corner node has 4 DOFs.
+Each corner node has 4 DOFs: (u, ∂u/∂ξ, ∂u/∂η, ∂²u/∂ξ∂η)
 """
 @inline function basis_functions(::Hermite{2, 3}, ξ::T, η::T) where {T <: Real}
-    Hξ = basis_functions(Hermite{1, 3}(), ξ)
-    Hη = basis_functions(Hermite{1, 3}(), η)
+    ϕξ = basis_functions(Hermite{1, 3}(), ξ) # [H₁(ξ), H₁'(ξ), H₂(ξ), H₂'(ξ)]
+    ϕη = basis_functions(Hermite{1, 3}(), η) # [H₁(η), H₁'(η), H₂(η), H₂'(η)]
 
-    SVector{16}(ntuple(k -> begin
-            i = mod(k - 1, 4) + 1
-            j = div(k - 1, 4) + 1
-            Hξ[i] * Hη[j]
-        end, 16))
+    ϕ = SVector{16}(
+        # NODE 1: (ξ,η) = (-1,-1)
+        ϕξ[1] * ϕη[1],  # u:        H₁(ξ)·H₁(η)    → value = 1 at (-1,-1)
+        ϕξ[2] * ϕη[1],  # ∂u/∂ξ:    H₁'(ξ)·H₁(η)   → ∂/∂ξ = 1 at (-1,-1)
+        ϕξ[1] * ϕη[2],  # ∂u/∂η:    H₁(ξ)·H₁'(η)   → ∂/∂η = 1 at (-1,-1)
+        ϕξ[2] * ϕη[2],  # ∂²u/∂ξ∂η: H₁'(ξ)·H₁'(η)  → ∂²/∂ξ∂η = 1 at (-1,-1)
+
+        # NODE 2: (ξ,η) = (+1,-1)
+        ϕξ[3] * ϕη[1],  # u:        H₂(ξ)·H₁(η)    → value = 1 at (+1,-1)
+        ϕξ[4] * ϕη[1],  # ∂u/∂ξ:    H₂'(ξ)·H₁(η)   → ∂/∂ξ = 1 at (+1,-1)
+        ϕξ[3] * ϕη[2],  # ∂u/∂η:    H₂(ξ)·H₁'(η)   → ∂/∂η = 1 at (+1,-1)
+        ϕξ[4] * ϕη[2],  # ∂²u/∂ξ∂η: H₂'(ξ)·H₁'(η)  → ∂²/∂ξ∂η = 1 at (+1,-1)
+
+        # NODE 3: (ξ,η) = (-1,+1)
+        ϕξ[1] * ϕη[3],  # u:        H₁(ξ)·H₂(η)    → value = 1 at (-1,+1)
+        ϕξ[2] * ϕη[3],  # ∂u/∂ξ:    H₁'(ξ)·H₂(η)   → ∂/∂ξ = 1 at (-1,+1)
+        ϕξ[1] * ϕη[4],  # ∂u/∂η:    H₁(ξ)·H₂'(η)   → ∂/∂η = 1 at (-1,+1)
+        ϕξ[2] * ϕη[4],  # ∂²u/∂ξ∂η: H₁'(ξ)·H₂'(η)  → ∂²/∂ξ∂η = 1 at (-1,+1)
+
+        # NODE 4: (ξ,η) = (+1,+1)
+        ϕξ[3] * ϕη[3],  # u:        H₂(ξ)·H₂(η)    → value = 1 at (+1,+1)
+        ϕξ[4] * ϕη[3],  # ∂u/∂ξ:    H₂'(ξ)·H₂(η)   → ∂/∂ξ = 1 at (+1,+1)
+        ϕξ[3] * ϕη[4],  # ∂u/∂η:    H₂(ξ)·H₂'(η)   → ∂/∂η = 1 at (+1,+1)
+        ϕξ[4] * ϕη[4]   # ∂²u/∂ξ∂η: H₂'(ξ)·H₂'(η)  → ∂²/∂ξ∂η = 1 at (+1,+1)
+    )
+
+    return ϕ
 end
 
 """
@@ -325,22 +347,63 @@ Derivatives of Bicubic Hermite basis functions.
   - `∂ϕ/∂η::SVector{16,T}`: Derivatives ∂ϕᵢ/∂η
 """
 @inline function basis_functions_derivatives(::Hermite{2, 3}, ξ::T, η::T) where {T <: Real}
-    Hξ = basis_functions(Hermite{1, 3}(), ξ)
-    Hη = basis_functions(Hermite{1, 3}(), η)
+    ϕξ = basis_functions(Hermite{1, 3}(), ξ)
+    ϕη = basis_functions(Hermite{1, 3}(), η)
 
-    dHξ = basis_functions_derivatives(Hermite{1, 3}(), ξ)
-    dHη = basis_functions_derivatives(Hermite{1, 3}(), η)
+    dϕξ = basis_functions_derivatives(Hermite{1, 3}(), ξ)
+    dϕη = basis_functions_derivatives(Hermite{1, 3}(), η)
 
-    ∂ϕ_∂ξ = SVector{16}(ntuple(k -> begin
-            i = mod(k - 1, 4) + 1
-            j = div(k - 1, 4) + 1
-            dHξ[i] * Hη[j]
-        end, 16))
-    ∂ϕ_∂η = SVector{16}(ntuple(k -> begin
-            i = mod(k - 1, 4) + 1
-            j = div(k - 1, 4) + 1
-            Hξ[i] * dHη[j]
-        end, 16))
+    ∂ϕ_∂ξ = SVector{16}(
+        # NODE 1: (ξ,η) = (-1,-1)
+        dϕξ[1] * ϕη[1],
+        dϕξ[2] * ϕη[1],
+        dϕξ[1] * ϕη[2],
+        dϕξ[2] * ϕη[2],
+
+        # NODE 2: (ξ,η) = (+1,-1)
+        dϕξ[3] * ϕη[1],
+        dϕξ[4] * ϕη[1],
+        dϕξ[3] * ϕη[2],
+        dϕξ[4] * ϕη[2],
+
+        # NODE 3: (ξ,η) = (-1,+1)
+        dϕξ[1] * ϕη[3],
+        dϕξ[2] * ϕη[3],
+        dϕξ[1] * ϕη[4],
+        dϕξ[2] * ϕη[4],
+
+        # NODE 4: (ξ,η) = (+1,+1)
+        dϕξ[3] * ϕη[3],
+        dϕξ[4] * ϕη[3],
+        dϕξ[3] * ϕη[4],
+        dϕξ[4] * ϕη[4]
+    )
+
+    ∂ϕ_∂η = SVector{16}(
+        # NODE 1: (ξ,η) = (-1,-1)
+        ϕξ[1] * dϕη[1],
+        ϕξ[2] * dϕη[1],
+        ϕξ[1] * dϕη[2],
+        ϕξ[2] * dϕη[2],
+
+        # NODE 2: (ξ,η) = (+1,-1)
+        ϕξ[3] * dϕη[1],
+        ϕξ[4] * dϕη[1],
+        ϕξ[3] * dϕη[2],
+        ϕξ[4] * dϕη[2],
+
+        # NODE 3: (ξ,η) = (-1,+1)
+        ϕξ[1] * dϕη[3],
+        ϕξ[2] * dϕη[3],
+        ϕξ[1] * dϕη[4],
+        ϕξ[2] * dϕη[4],
+
+        # NODE 4: (ξ,η) = (+1,+1)
+        ϕξ[3] * dϕη[3],
+        ϕξ[4] * dϕη[3],
+        ϕξ[3] * dϕη[4],
+        ϕξ[4] * dϕη[4]
+    )
 
     return ∂ϕ_∂ξ, ∂ϕ_∂η
 end
