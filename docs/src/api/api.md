@@ -85,3 +85,9 @@ Pages = ["pde_inputdata.jl"]
 Modules = [WaveAcoustics]
 Pages = ["pde_solve.jl"]
 ```
+
+## Convergence test
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["convergence_test.jl"]
+```
