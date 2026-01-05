@@ -2,7 +2,7 @@
 
 julia_version = "1.12.2"
 manifest_format = "2.0"
-project_hash = "00517aab158faf791556ca4e3085e2eb04f2d8a0"
+project_hash = "c1424d2539374300d046280d5a5a5954152c22fe"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -454,7 +454,7 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 version = "1.11.0"
 
 [[deps.WaveAcoustics]]
-deps = ["GaussQuadrature", "StaticArrays"]
+deps = ["GaussQuadrature", "Printf", "StaticArrays"]
 path = "."
 uuid = "015e6fd1-d146-4073-8025-2809e47f770e"
 version = "1.0.0-DEV"

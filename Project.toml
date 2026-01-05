@@ -8,10 +8,12 @@ projects = ["docs"]
 
 [deps]
 GaussQuadrature = "d54b0c1a-921d-58e0-8e36-89d8069c0969"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 GaussQuadrature = "0.5.8"
+Printf = "1.11.0"
 StaticArrays = "1.9.15"
 julia = "1.12"
 
