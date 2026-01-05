@@ -67,3 +67,21 @@ Pages = ["boundary_conditions.jl"]
 Modules = [WaveAcoustics]
 Pages = ["dof_map.jl"]
 ```
+
+## Quadrature Setup
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["quadrature_setup.jl"]
+```
+
+## PDE Input Data
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["pde_inputdata.jl"]
+```
+
+## PDE Solve
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["pde_solve.jl"]
+```
