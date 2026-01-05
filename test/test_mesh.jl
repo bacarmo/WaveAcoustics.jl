@@ -1,5 +1,5 @@
 @testitem "CartesianMesh 1D" begin
-    using WaveAcoustics
+    using WaveAcoustics: CartesianMesh
 
     mesh = CartesianMesh((0.0,), (1.0,), (10,))
     @test mesh.pmin == (0.0,)
@@ -9,7 +9,7 @@
 end
 
 @testitem "CartesianMesh 2D" begin
-    using WaveAcoustics
+    using WaveAcoustics: CartesianMesh
 
     mesh = CartesianMesh((0.0, 0.0), (1.0, 2.0), (10, 20))
     @test mesh.pmin == (0.0, 0.0)

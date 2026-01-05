@@ -1,6 +1,5 @@
 @testitem "LG: Lagrange{1, 1}()" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh
 
     mesh = CartesianMesh((0.0,), (1.0,), (4,))
     LG = build_LG(mesh, Lagrange{1, 1}())
@@ -13,8 +12,7 @@
 end
 
 @testitem "LG: Lagrange{1, 1}(), UInt8" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh
     using StaticArrays: SVector
 
     mesh = CartesianMesh((0.0,), (1.0,), (UInt8(4),))
@@ -33,8 +31,7 @@ end
 end
 
 @testitem "LG: Lagrange{1, 2}()" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh, Lagrange
 
     mesh = CartesianMesh((0.0,), (1.0,), (4,))
     LG = build_LG(mesh, Lagrange{1, 2}())
@@ -47,8 +44,7 @@ end
 end
 
 @testitem "LG: Lagrange{1, 3}()" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh, Lagrange
 
     mesh = CartesianMesh((0.0,), (1.0,), (4,))
     LG = build_LG(mesh, Lagrange{1, 3}())
@@ -61,8 +57,7 @@ end
 end
 
 @testitem "LG: Lagrange{2, 1}()" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh, Lagrange
 
     mesh = CartesianMesh((0.0, 0.0), (1.0, 1.1), (4, 3))
     LG = build_LG(mesh, Lagrange{2, 1}())
@@ -83,8 +78,7 @@ end
 end
 
 @testitem "LG: Lagrange{2, 2}()" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh, Lagrange
 
     mesh = CartesianMesh((0.0, 0.0), (1.0, 1.1), (4, 3))
     LG = build_LG(mesh, Lagrange{2, 2}())
@@ -97,8 +91,7 @@ end
 end
 
 @testitem "LG: Lagrange{2, 3}()" begin
-    using WaveAcoustics
-    using WaveAcoustics: build_LG
+    using WaveAcoustics: build_LG, CartesianMesh, Lagrange
 
     mesh = CartesianMesh((0.0, 0.0), (1.0, 1.1), (4, 3))
     LG = build_LG(mesh, Lagrange{2, 3}())
@@ -111,8 +104,7 @@ end
 end
 
 @testitem "DOFMap: Lagrange{1, 1}(), LeftRight()" begin
-    using WaveAcoustics
-    using WaveAcoustics: DOFMap
+    using WaveAcoustics: DOFMap, CartesianMesh, Lagrange, LeftRight
 
     mesh = CartesianMesh((0.0,), (1.0,), (4,))
     dofmap = DOFMap(mesh, Lagrange{1, 1}(), LeftRight())
@@ -126,8 +118,7 @@ end
 end
 
 @testitem "DOFMap: Lagrange{1, 1}(), LeftRight(), UInt8" begin
-    using WaveAcoustics
-    using WaveAcoustics: DOFMap
+    using WaveAcoustics: DOFMap, CartesianMesh, Lagrange, LeftRight
     using StaticArrays: SVector
 
     mesh = CartesianMesh((0.0,), (1.0,), (UInt8(4),))
@@ -148,8 +139,7 @@ end
 end
 
 @testitem "DOFMap: Lagrange{1, 2}(), LeftRight()" begin
-    using WaveAcoustics
-    using WaveAcoustics: DOFMap
+    using WaveAcoustics: DOFMap, CartesianMesh, Lagrange, LeftRight
 
     mesh = CartesianMesh((0.0,), (1.0,), (4,))
     dofmap = DOFMap(mesh, Lagrange{1, 2}(), LeftRight())
@@ -163,8 +153,7 @@ end
 end
 
 @testitem "DOFMap: Lagrange{1, 3}(), LeftRight()" begin
-    using WaveAcoustics
-    using WaveAcoustics: DOFMap
+    using WaveAcoustics: DOFMap, CartesianMesh, Lagrange, LeftRight
 
     mesh = CartesianMesh((0.0,), (1.0,), (4,))
     dofmap = DOFMap(mesh, Lagrange{1, 3}(), LeftRight())
