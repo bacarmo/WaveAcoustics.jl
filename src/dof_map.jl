@@ -32,9 +32,9 @@ Construct DOF map for given mesh, element family, and Dirichlet boundary conditi
 
 # Examples
 ```jldoctest
-julia> mesh = CartesianMesh((0.0,), (1.0,), (4,));
+julia> mesh = WaveAcoustics.CartesianMesh((0.0,), (1.0,), (4,));
 
-julia> dofmap = WaveAcoustics.DOFMap(mesh, Lagrange{1,1}(), LeftRight());
+julia> dofmap = WaveAcoustics.DOFMap(mesh, WaveAcoustics.Lagrange{1,1}(), WaveAcoustics.LeftRight());
 
 julia> dofmap.EQoLG
 4-element Vector{StaticArraysCore.SVector{2, Int64}}:

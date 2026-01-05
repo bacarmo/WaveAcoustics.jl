@@ -45,7 +45,7 @@ Construct quadrature setup with `4` Gauss-Legendre points per dimension.
 
 ## Examples
 ```jldoctest
-julia> quad = QuadratureSetup((0.1, 0.2), (0.0, 0.0));
+julia> quad = WaveAcoustics.QuadratureSetup((0.1, 0.2), (0.0, 0.0));
 
 julia> length(quad.xP)
 4

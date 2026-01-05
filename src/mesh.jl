@@ -36,12 +36,12 @@ Construct uniform Cartesian mesh partitioning `[pmin, pmax]` (1D) or
 
 # Examples
 ```jldoctest
-julia> mesh1d = CartesianMesh((0.0,), (1.0,), (10,));
+julia> mesh1d = WaveAcoustics.CartesianMesh((0.0,), (1.0,), (10,));
 
 julia> mesh1d.Δx
 (0.1,)
 
-julia> mesh2d = CartesianMesh((0.0, 0.0), (1.0, 2.0), (10, 20));
+julia> mesh2d = WaveAcoustics.CartesianMesh((0.0, 0.0), (1.0, 2.0), (10, 20));
 
 julia> mesh2d.Δx
 (0.1, 0.1)
