@@ -170,7 +170,23 @@ end
 
 function build_EQ(Nx::NTuple{2, I}, ::Lagrange{2, Deg},
         ::LeftRightTop) where {I <: Integer, Deg}
-    error("build_EQ not yet implemented for Lagrange{2,Deg} with LeftRightTop")
+    nx = Deg * Int64(Nx[1]) + 1     # Total DOFs in x-direction
+    ny = Deg * Int64(Nx[2]) + 1     # Total DOFs in y-direction
+    num_dof = nx * ny               # Total DOFs
+
+    m = num_dof - 2 * ny - (nx - 2) # Free DOFs 
+    EQ = fill(I(m + 1), num_dof)
+
+    # Re-enumerate interior and bottom boundary functions (excluding corners)
+    for j in 1:(ny - 1)
+        cst1 = (j - 1) * nx
+        cst2 = (j - 1) * (nx - 2) - 1
+        for i in 2:(nx - 1)
+            @inbounds EQ[cst1 + i] = I(cst2 + i)
+        end
+    end
+
+    return EQ, m
 end
 
 function build_EQ(Nx::NTuple{1, I}, ::Hermite{1, 3}, ::LeftRight) where {I <: Integer}

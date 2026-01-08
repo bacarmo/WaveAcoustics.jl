@@ -1,3 +1,59 @@
+@testitem "EQ: Lagrange{2,1}(), LeftRightTop()" begin
+    using WaveAcoustics: build_EQ, Lagrange, LeftRightTop
+
+    Nx = (4, 3)
+    EQ, m = build_EQ(Nx, Lagrange{2, 1}(), LeftRightTop())
+
+    nx = 5  # 1*4 + 1
+    ny = 4  # 1*3 + 1
+
+    @test m == 9           # nx * ny - 2 * ny - (nx - 2)
+    @test length(EQ) == 20 # nx * ny
+
+    # Left, right, and top boundaries should be m+1
+    for j in 1:ny
+        @test EQ[(j - 1) * nx + 1] == m + 1  # Left
+        @test EQ[j * nx] == m + 1            # Right
+    end
+    for i in 1:nx
+        @test EQ[(ny - 1) * nx + i] == m + 1  # Top
+    end
+
+    # Interior and bottom numbering
+    @test EQ[[2, 3, 4, 7, 8, 9, 12, 13, 14]] == 1:9
+end
+
+@testitem "EQ: Lagrange{2,2}(), LeftRightTop()" begin
+    using WaveAcoustics: build_EQ, Lagrange, LeftRightTop
+
+    Nx = (4, 3)
+    EQ, m = build_EQ(Nx, Lagrange{2, 2}(), LeftRightTop())
+
+    nx = 9  # 2*4 + 1
+    ny = 7  # 2*3 + 1
+
+    @test m == 42          # nx * ny - 2 * ny - (nx - 2)
+    @test length(EQ) == 63 # nx * ny
+
+    # Left, right, and top boundaries should be m+1
+    for j in 1:ny
+        @test EQ[(j - 1) * nx + 1] == m + 1  # Left
+        @test EQ[j * nx] == m + 1            # Right
+    end
+    for i in 1:nx
+        @test EQ[(ny - 1) * nx + i] == m + 1  # Top
+    end
+
+    # Interior and bottom numbering (j=1:6, i=2:8)
+    expected_indices = Int[]
+    for j in 1:6
+        for i in 2:8
+            push!(expected_indices, (j - 1) * nx + i)
+        end
+    end
+    @test EQ[expected_indices] == 1:42
+end
+
 @testitem "LG: Lagrange{1, 1}()" begin
     using WaveAcoustics: build_LG, CartesianMesh
 
