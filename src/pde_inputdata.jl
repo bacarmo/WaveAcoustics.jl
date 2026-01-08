@@ -80,7 +80,7 @@ Base.@kwdef struct PDECommonData{T <: Real, Fα, Ff, Fdf, Fg, F∂ₛg,
 end
 
 """
-    PDEInputData{T<:Real, C<:PDECommonData, Ff₁, Ff₂, Fu, Fv, Fz, Fr}
+    PDEInputData{C<:PDECommonData, Ff₁, Ff₂, Fu, Fv, Fz, Fr}
 
 Complete problem specification including source terms and analytical solutions.
 
