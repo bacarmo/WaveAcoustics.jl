@@ -153,6 +153,26 @@ end
     @test ∂ϕ_∂ξ ≈ [-0.25, 0.25, -0.25, 0.25]
     @test ∂ϕ_∂η ≈ [-0.25, -0.25, 0.25, 0.25]
 
+    # Derivatives at node 1: (−1,−1)
+    ∂ϕ_∂ξ, ∂ϕ_∂η = basis_functions_derivatives(Lagrange{2, 1}(), -1.0, -1.0)
+    @test ∂ϕ_∂ξ ≈ [-0.5, 0.5, 0.0, 0.0]
+    @test ∂ϕ_∂η ≈ [-0.5, 0.0, 0.5, 0.0]
+
+    # Derivatives at node 2: (+1,−1)
+    ∂ϕ_∂ξ, ∂ϕ_∂η = basis_functions_derivatives(Lagrange{2, 1}(), +1.0, -1.0)
+    @test ∂ϕ_∂ξ ≈ [-0.5, 0.5, 0.0, 0.0]
+    @test ∂ϕ_∂η ≈ [0.0, -0.5, 0.0, 0.5]
+
+    # Derivatives at node 3: (−1,+1)
+    ∂ϕ_∂ξ, ∂ϕ_∂η = basis_functions_derivatives(Lagrange{2, 1}(), -1.0, +1.0)
+    @test ∂ϕ_∂ξ ≈ [0.0, 0.0, -0.5, 0.5]
+    @test ∂ϕ_∂η ≈ [-0.5, 0.0, 0.5, 0.0]
+
+    # Derivatives at node 4: (+1,+1)
+    ∂ϕ_∂ξ, ∂ϕ_∂η = basis_functions_derivatives(Lagrange{2, 1}(), +1.0, +1.0)
+    @test ∂ϕ_∂ξ ≈ [0.0, 0.0, -0.5, 0.5]
+    @test ∂ϕ_∂η ≈ [0.0, -0.5, 0.0, 0.5]
+
     # Test type
     vec64_ξ, vec64_η = basis_functions_derivatives(Lagrange{2, 1}(), 0.0, 0.0)
     vec32_ξ, vec32_η = basis_functions_derivatives(
