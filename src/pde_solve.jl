@@ -40,11 +40,15 @@ function pde_solve(
     dof_map_m₂ = DOFMap(mesh1D, Lagrange{1, 1}(), LeftRight())
 
     # ========================================
-    # Assembly local matrices
+    # Assemble local matrices
     # ========================================
+    Me_m₁xm₁ = assembly_local_matrix_ϕxϕ(mesh2D, Lagrange{2, 1}())
+    Ke_m₁xm₁ = assembly_local_matrix_∇ϕx∇ϕ(mesh2D, Lagrange{2, 1}())
+    Me_m₂xm₂ = assembly_local_matrix_ϕxϕ(mesh1D, Lagrange{1, 1}())
 
     # ========================================
-    # Assembly global matrices
+    # Assemble global matrices
     # ========================================
 
+    return (0.0, 0.0, 0.0, 0.0)
 end
