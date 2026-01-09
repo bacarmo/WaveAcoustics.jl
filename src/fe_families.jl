@@ -40,3 +40,22 @@ function num_local_dof end
 num_local_dof(::Lagrange{Dim, Deg}) where {Dim, Deg} = (Deg + 1)^Dim
 num_local_dof(::Hermite{1, 3}) = 4
 num_local_dof(::Hermite{2, 3}) = 16
+
+"""
+    polynomial_degree(family::FEFamily)
+
+Return polynomial degree for the finite element family.
+
+# Examples
+```jldoctest
+julia> WaveAcoustics.polynomial_degree(Lagrange{2,3}())
+3
+
+julia> WaveAcoustics.polynomial_degree(Hermite{1,3}())
+3
+```
+"""
+function polynomial_degree end
+
+polynomial_degree(::Lagrange{Dim, Deg}) where {Dim, Deg} = Deg
+polynomial_degree(::Hermite{Dim, Deg}) where {Dim, Deg} = Deg
