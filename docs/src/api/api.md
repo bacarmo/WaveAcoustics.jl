@@ -74,6 +74,12 @@ Modules = [WaveAcoustics]
 Pages = ["quadrature_setup.jl"]
 ```
 
+## Assemble local matrices
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["assembly_local_matrices.jl"]
+```
+
 ## PDE Input Data
 ```@autodocs
 Modules = [WaveAcoustics]
