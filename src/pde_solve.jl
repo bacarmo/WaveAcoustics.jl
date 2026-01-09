@@ -14,7 +14,7 @@ Solve coupled wave-acoustic PDE system and compute L∞(0,T;L²) errors.
 function pde_solve(
         Nx::NTuple{2, I},
         τ::T,
-        input_data::PDEInputData{T}
+        input_data
 ) where {I <: Integer, T <: Real}
     # ========================================
     # Spatial and temporal discretization
