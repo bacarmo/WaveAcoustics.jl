@@ -30,7 +30,10 @@ end
 
     # Analytical solution
     Δx, Δy = mesh.Δx
-    Me_analytical = SMatrix{4, 4}([4 2 2 1; 2 4 1 2; 2 1 4 2; 1 2 2 4]) * (Δx * Δy / 36)
+    Me_analytical = (Δx * Δy / 36) * SMatrix{4, 4}([4 2 2 1;
+                                                    2 4 1 2;
+                                                    2 1 4 2;
+                                                    1 2 2 4])
 
     # Test
     @test Me_quad ≈ Me_analytical
