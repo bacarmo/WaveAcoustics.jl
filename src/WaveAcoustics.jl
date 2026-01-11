@@ -3,6 +3,7 @@ module WaveAcoustics
 using StaticArrays: SVector, SMatrix, @SVector, @SMatrix
 using GaussQuadrature: legendre
 using Printf: @printf
+using SparseArrays: sparse
 
 # Exports
 export PDECommonData, PDEInputData
@@ -20,6 +21,7 @@ include("mesh.jl")
 include("dof_map.jl")
 include("quadrature_setup.jl")
 include("assembly_local_matrices.jl")
+include("assembly_global_matrices.jl")
 include("pde_inputdata.jl")
 include("pde_solve.jl")
 include("convergence_test.jl")
