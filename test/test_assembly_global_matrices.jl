@@ -33,6 +33,34 @@
     @test M ≈ M_analytical
 end
 
+@testitem "assembly_global_matrix: Lagrange{1,1}(), LeftRight(), Me symmetric" begin
+    using WaveAcoustics: assembly_global_matrix, CartesianMesh, Lagrange, DOFMap, LeftRight
+    using SparseArrays: sparse, SparseMatrixCSC
+    using StaticArrays: SMatrix
+    using LinearAlgebra: Symmetric
+    using BenchmarkTools
+
+    # Setup
+    mesh = CartesianMesh((0.0,), (1.0,), (2^3,))
+    family = Lagrange{1, 1}()
+    dof_map = DOFMap(mesh, family, LeftRight())
+    Δx = mesh.Δx[1]
+    Me = (Δx / 6) * SMatrix{2, 2}([2 1;
+                                   1 2])
+    Me_sym = Symmetric(Me)
+
+    # Assemble global mass matrix
+    M = assembly_global_matrix(Me, dof_map)
+    M_sym = assembly_global_matrix(Me_sym, dof_map)
+
+    # Type tests
+    @test M isa SparseMatrixCSC{Float64, Int64}
+    @test M_sym isa Symmetric{Float64, SparseMatrixCSC{Float64, Int64}}
+
+    # Consistency test
+    @test M ≈ M_sym
+end
+
 @testitem "assembly_global_matrix: Lagrange{2,1}(), LeftRightTop(), Me" begin
     using WaveAcoustics: assembly_global_matrix, CartesianMesh, Lagrange, DOFMap,
                          LeftRightTop
@@ -78,4 +106,34 @@ end
 
     # Test
     @test M ≈ M_analytical
+end
+
+@testitem "assembly_global_matrix: Lagrange{2,1}(), LeftRightTop(), Me symmetric" begin
+    using WaveAcoustics: assembly_global_matrix, CartesianMesh, Lagrange, DOFMap,
+                         LeftRightTop
+    using SparseArrays: sparse, SparseMatrixCSC
+    using StaticArrays: SMatrix
+    using LinearAlgebra: Symmetric
+
+    # Setup
+    mesh = CartesianMesh((0.0, 0.0), (1.0, 1.0), (2^3, 2^3))
+    family = Lagrange{2, 1}()
+    dof_map = DOFMap(mesh, family, LeftRightTop())
+    Δx, Δy = mesh.Δx
+    Me = (Δx * Δy / 36) * SMatrix{4, 4}([4 2 2 1;
+                                         2 4 1 2;
+                                         2 1 4 2;
+                                         1 2 2 4])
+    Me_sym = Symmetric(Me)
+
+    # Assemble global mass matrix
+    M = assembly_global_matrix(Me, dof_map)
+    M_sym = assembly_global_matrix(Me_sym, dof_map)
+
+    # Type tests
+    @test M isa SparseMatrixCSC{Float64, Int64}
+    @test M_sym isa Symmetric{Float64, SparseMatrixCSC{Float64, Int64}}
+
+    # Consistency test
+    @test M ≈ M_sym
 end
