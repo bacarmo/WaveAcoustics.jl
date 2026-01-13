@@ -39,6 +39,9 @@ function pde_solve(
     dof_map_m₁ = DOFMap(mesh2D, Lagrange{2, 1}(), LeftRightTop())
     dof_map_m₂ = DOFMap(mesh1D, Lagrange{1, 1}(), LeftRight())
 
+    m₁ = dof_map_m₁.m
+    m₂ = dof_map_m₂.m
+
     # ========================================
     # Assemble local matrices
     # ========================================
@@ -46,8 +49,22 @@ function pde_solve(
     Ke_m₁xm₁ = assembly_local_matrix_∇ϕx∇ϕ(mesh2D, Lagrange{2, 1}())
     Me_m₂xm₂ = assembly_local_matrix_ϕxϕ(mesh1D, Lagrange{1, 1}())
 
+    Me_m₁xm₁ = Symmetric(Me_m₁xm₁)
+    Ke_m₁xm₁ = Symmetric(Ke_m₁xm₁)
+    Me_m₂xm₂ = Symmetric(Me_m₂xm₂)
+
     # ========================================
     # Assemble global matrices
+    # ========================================
+    M_m₁xm₁ = assembly_global_matrix(Me_m₁xm₁, dof_map_m₁)
+    K_m₁xm₁ = assembly_global_matrix(Ke_m₁xm₁, dof_map_m₁)
+    M_m₂xm₂ = assembly_global_matrix(Me_m₂xm₂, dof_map_m₂)
+
+    M_m₁xm₂ = [M_m₂xm₂; spzeros(m₁ - m₂, m₂)]
+    M_m₂xm₁ = [M_m₂xm₂ spzeros(m₂, m₁ - m₂)]
+
+    # ========================================
+    # Compute v⁰ and d⁰
     # ========================================
 
     return (0.0, 0.0, 0.0, 0.0)
