@@ -98,3 +98,51 @@ end
     @test F≈expected atol=1e-14
     @test alloc == 0
 end
+
+@testitem "assembly_rhs_2d!: Lagrange{2,1}(), LeftRightBottomTop(), ∫f(x,y)*φᵢ(x,y) dx dy" begin
+    using WaveAcoustics: assembly_rhs_2d!, CartesianMesh, Lagrange, LeftRightBottomTop,
+                         DOFMap, basis_functions
+    using StaticArrays: SVector, @SMatrix
+    using GaussQuadrature: legendre
+
+    # Domain: Ω = ]0,1[×]0,1[, uniform mesh with 4×3 elements, Bilinear Lagrange basis and essential BC
+    mesh = CartesianMesh((0.0, 0.0), (1.0, 1.0), (4, 3))
+    family = Lagrange{2, 1}()
+    dof_map = DOFMap(mesh, family, LeftRightBottomTop())
+
+    # Gauss–Legendre quadrature setup
+    Npg = 2
+    P_raw, W_raw = legendre(Npg)
+    W = SVector{Npg, Float64}(W_raw)
+    P = SVector{Npg, Float64}(P_raw)
+
+    φ(ξ, η) = basis_functions(family, ξ, η)
+    W_basisP = @SMatrix [@. W[i] * W[j] * φ(P[i], P[j]) for i in 1:Npg, j in 1:Npg]
+
+    Δx, Δy = mesh.Δx
+    xP = @. (Δx / 2) * (P + 1) + mesh.pmin[1]
+    yP = @. (Δy / 2) * (P + 1) + mesh.pmin[2]
+
+    # Initialize global RHS vector
+    m = dof_map.m
+    F = zeros(Float64, m)
+
+    # Test 1: f(x,y) = 1
+    f₁(x, y) = 1.0
+    scale = Δx * Δy / 4
+    alloc = @allocated assembly_rhs_2d!(F, f₁, scale, W_basisP, mesh, dof_map, xP, yP)
+    @test F ≈ fill(Δx * Δy, m)
+    @test alloc == 0  # No allocations should occur within the function
+
+    # Test 2: f(x,y) = x*(x-1)*y*(y-1)
+    f₂(x, y) = x * (x - 1) * y * (y - 1)
+    scale = Δx * Δy / 4
+    alloc = @allocated assembly_rhs_2d!(F, f₂, scale, W_basisP, mesh, dof_map, xP, yP)
+
+    cst1 = 13 / 27648 + 7 / 9216 + 169 / 248_832 + 91 / 82_944
+    cst2 = 2 * 23 / 27_648 + 2 * 299 / 248_832
+
+    @test F[1] ≈ F[3] ≈ F[4] ≈ F[6] ≈ cst1
+    @test F[2] ≈ F[5] ≈ cst2
+    @test alloc == 0
+end
