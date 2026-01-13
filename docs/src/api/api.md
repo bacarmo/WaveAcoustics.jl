@@ -86,6 +86,12 @@ Modules = [WaveAcoustics]
 Pages = ["assembly_global_matrices.jl"]
 ```
 
+## Assemble global vectors
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["assembly_global_vectors.jl"]
+```
+
 ## PDE Input Data
 ```@autodocs
 Modules = [WaveAcoustics]
