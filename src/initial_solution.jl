@@ -43,10 +43,6 @@ end
 
 Compute initial velocity and displacement fields via H₀¹ projection from gradient data.
 
-Projects the initial conditions v₀ and u₀ onto the finite element space using their 
-gradient components stored in `input_data`. The projections v⁰ and d⁰ are computed 
-by solving (∇v⁰, ∇φ) = (∇v₀, ∇φ) and (∇d⁰, ∇φ) = (∇u₀, ∇φ) for all φ ∈ Vₕ.
-
 # Arguments
 - `v⁰::AbstractVector`: Output vector for initial velocity coefficients (modified in-place, length `dof_map.m`)
 - `d⁰::AbstractVector`: Output vector for initial displacement coefficients (modified in-place, length `dof_map.m`)
