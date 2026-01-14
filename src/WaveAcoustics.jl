@@ -4,7 +4,7 @@ using StaticArrays: SVector, SMatrix, @SVector, @SMatrix
 using GaussQuadrature: legendre
 using Printf: @printf
 using SparseArrays: sparse, spzeros
-using LinearAlgebra: Symmetric, lmul!
+using LinearAlgebra: Symmetric, lmul!, cholesky, ldiv!
 
 # Exports
 export PDECommonData, PDEInputData
@@ -25,6 +25,8 @@ include("assembly_local_matrices.jl")
 include("assembly_global_matrices.jl")
 include("assembly_global_vectors.jl")
 include("pde_inputdata.jl")
+include("initial_solution.jl")
+include("error_norms.jl")
 include("pde_solve.jl")
 include("convergence_test.jl")
 end
