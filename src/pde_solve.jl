@@ -73,6 +73,9 @@ function pde_solve(
     # ========================================
     # Compute r⁰ and z⁰
     # ========================================
+    r⁰ = zeros(T, m₂)
+    z⁰ = zeros(T, m₂)
+    compute_r⁰_z⁰!(r⁰, z⁰, M_m₂xm₂, input_data, mesh1D, dof_map_m₂, quad)
 
     # ========================================
     # Compute L2 error
@@ -82,8 +85,12 @@ function pde_solve(
     L2_error_r = zeros(T, nt)
     L2_error_z = zeros(T, nt)
 
-    L2_error_v = L2_error_2d(input_data.common.v₀, v⁰, mesh2D, dof_map_m₁, quad)
-    L2_error_d = L2_error_2d(input_data.common.u₀, d⁰, mesh2D, dof_map_m₁, quad)
+    L2_error_v[1] = L2_error_2d(input_data.common.v₀, v⁰, mesh2D, dof_map_m₁, quad)
+    L2_error_d[1] = L2_error_2d(input_data.common.u₀, d⁰, mesh2D, dof_map_m₁, quad)
 
-    return (maximum(L2_error_v), maximum(L2_error_d), 0.0, 0.0)
+    L2_error_r[1] = L2_error_1d(input_data.common.r₀, r⁰, mesh1D, dof_map_m₂, quad)
+    L2_error_z[1] = L2_error_1d(input_data.common.z₀, z⁰, mesh1D, dof_map_m₂, quad)
+
+    return (
+        maximum(L2_error_v), maximum(L2_error_d), maximum(L2_error_r), maximum(L2_error_z))
 end
