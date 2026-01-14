@@ -60,7 +60,8 @@ function convergence_test(test_type::Symbol;
         input_data = example1_manufactured())
 
     # Validate domain specification
-    if !hasfield(typeof(input_data), :pmin) || !hasfield(typeof(input_data), :pmax)
+    if !hasfield(typeof(input_data.common), :pmin) ||
+       !hasfield(typeof(input_data.common), :pmax)
         throw(ArgumentError("input_data must have pmin and pmax fields for domain bounds"))
     end
 
@@ -135,7 +136,8 @@ Execute coupled space-time convergence test with τ = h.
 """
 function _convergence_test_coupled(Nx_exp_range, input_data)
     Nx_values = [2^i for i in Nx_exp_range]
-    h_values = [_compute_element_diameter(Nx, input_data.pmin, input_data.pmax)
+    h_values = [_compute_element_diameter(
+                    Nx, input_data.common.pmin, input_data.common.pmax)
                 for Nx in Nx_values]
     τ_values = h_values  # Coupled refinement
 
@@ -218,7 +220,7 @@ function _run_convergence_study(
         τ = τ_values[i]
 
         # Solve PDE and collect error norms
-        err_v, err_d, err_r, err_z = solve_pde((Nx, Nx), τ, input_data)
+        err_v, err_d, err_r, err_z = pde_solve((Nx, Nx), τ, input_data)
 
         errors.v[i] = err_v
         errors.d[i] = err_d
