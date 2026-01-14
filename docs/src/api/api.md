@@ -112,11 +112,11 @@ Pages = ["pde_solve.jl"]
 ## Error norms
 ```@autodocs
 Modules = [WaveAcoustics]
-Pages = ["initial_solution.jl"]
+Pages = ["error_norms.jl"]
 ```
 
 ## Convergence test
 ```@autodocs
 Modules = [WaveAcoustics]
-Pages = ["error_norms.jl"]
+Pages = ["convergence_test.jl"]
 ```
