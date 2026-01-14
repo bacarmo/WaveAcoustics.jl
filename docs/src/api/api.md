@@ -91,6 +91,11 @@ Pages = ["assembly_global_matrices.jl"]
 Modules = [WaveAcoustics]
 Pages = ["assembly_global_vectors.jl"]
 ```
+## Initial Solution
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["initial_solution.jl"]
+```
 
 ## PDE Input Data
 ```@autodocs
@@ -104,8 +109,14 @@ Modules = [WaveAcoustics]
 Pages = ["pde_solve.jl"]
 ```
 
+## Error norms
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["initial_solution.jl"]
+```
+
 ## Convergence test
 ```@autodocs
 Modules = [WaveAcoustics]
-Pages = ["convergence_test.jl"]
+Pages = ["error_norms.jl"]
 ```
