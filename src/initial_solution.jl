@@ -64,3 +64,33 @@ function compute_v⁰_d⁰!(v⁰, d⁰, lhs_mat, input_data, mesh, dof_map, quad
 
     return nothing
 end
+
+"""
+    compute_r⁰_z⁰!(r⁰, z⁰, lhs_mat, input_data, mesh, dof_map, quad)
+
+Compute initial velocity and displacement fields via L2 projection.
+
+# Arguments
+- `r⁰::AbstractVector`: Output vector for initial velocity coefficients (modified in-place, length `dof_map.m`)
+- `z⁰::AbstractVector`: Output vector for initial displacement coefficients (modified in-place, length `dof_map.m`)
+- `lhs_mat`: Matrix to be factorized
+- `input_data`: Structure containing fields `r₀`, `z₀`
+- `mesh::CartesianMesh{1}`: 1D Cartesian mesh
+- `dof_map::DOFMap`: DOF mapping with `EQoLG` connectivity and `m` free DOFs
+- `quad::QuadratureSetup`: Precomputed quadrature data
+"""
+function compute_r⁰_z⁰!(r⁰, z⁰, lhs_mat, input_data, mesh, dof_map, quad)
+    rhs_vec = similar(r⁰)
+    factorized_lhs_mat = cholesky(lhs_mat)
+
+    scale = mesh.Δx[1] / 2
+    W_basisP = quad.W_ϕP
+
+    assembly_rhs_1d!(rhs_vec, input_data.common.r₀, scale, W_basisP, mesh, dof_map, quad.xP)
+    ldiv!(r⁰, factorized_lhs_mat, rhs_vec)
+
+    assembly_rhs_1d!(rhs_vec, input_data.common.z₀, scale, W_basisP, mesh, dof_map, quad.xP)
+    ldiv!(z⁰, factorized_lhs_mat, rhs_vec)
+
+    return nothing
+end
