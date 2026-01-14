@@ -66,6 +66,24 @@ function pde_solve(
     # ========================================
     # Compute v⁰ and d⁰
     # ========================================
+    v⁰ = zeros(T, m₁)
+    d⁰ = zeros(T, m₁)
+    compute_v⁰_d⁰!(v⁰, d⁰, K_m₁xm₁, input_data, mesh2D, dof_map_m₁, quad)
 
-    return (0.0, 0.0, 0.0, 0.0)
+    # ========================================
+    # Compute r⁰ and z⁰
+    # ========================================
+
+    # ========================================
+    # Compute L2 error
+    # ========================================
+    L2_error_v = zeros(T, nt)
+    L2_error_d = zeros(T, nt)
+    L2_error_r = zeros(T, nt)
+    L2_error_z = zeros(T, nt)
+
+    L2_error_v = L2_error_2d(input_data.common.v₀, v⁰, mesh2D, dof_map_m₁, quad)
+    L2_error_d = L2_error_2d(input_data.common.u₀, d⁰, mesh2D, dof_map_m₁, quad)
+
+    return (maximum(L2_error_v), maximum(L2_error_d), 0.0, 0.0)
 end
