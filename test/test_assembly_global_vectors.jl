@@ -146,3 +146,60 @@ end
     @test F[2] ≈ F[5] ≈ cst2
     @test alloc == 0
 end
+
+@testitem "assembly_nonlinearity_F!: Lagrange{2,1}(), LeftRightTop(), f(u) = u, d = ones(m)" begin
+    using WaveAcoustics: assembly_nonlinearity_F!, CartesianMesh, Lagrange, LeftRightTop,
+                         DOFMap, QuadratureSetup, assembly_global_matrix,
+                         assembly_local_matrix_ϕxϕ
+
+    # Setup
+    mesh = CartesianMesh((0.0, 0.0), (1.0, 1.0), (4, 3))
+    dof_map = DOFMap(mesh, Lagrange{2, 1}(), LeftRightTop())
+    quad = QuadratureSetup(mesh.Δx, mesh.pmin)
+
+    # Exact solution: for f(u) = u and d = ones, F = M·d where M is mass matrix
+    Me = assembly_local_matrix_ϕxϕ(mesh, Lagrange{2, 1}())
+    M = assembly_global_matrix(Me, dof_map)
+    d = ones(Float64, dof_map.m)
+    expected_F = M * d
+
+    # Test correctness
+    f(u) = u
+    scale = 1.0
+    computed_F = zeros(Float64, dof_map.m)
+    assembly_nonlinearity_F!(computed_F, scale, f, d, mesh, dof_map, quad)
+    @test computed_F ≈ expected_F
+
+    # Test performance
+    alloc = @allocated assembly_nonlinearity_F!(
+        computed_F, scale, f, d, mesh, dof_map, quad)
+    @test alloc == 0
+end
+
+@testitem "assembly_nonlinearity_G!: Lagrange{1,1}(), LeftRight(), g(x, v) = v, v = ones(m)" begin
+    using WaveAcoustics: assembly_nonlinearity_G!, CartesianMesh, Lagrange, LeftRight,
+                         DOFMap, QuadratureSetup, assembly_global_matrix,
+                         assembly_local_matrix_ϕxϕ
+    # Setup
+    mesh = CartesianMesh((0.0,), (1.0,), (4,))
+    dof_map = DOFMap(mesh, Lagrange{1, 1}(), LeftRight())
+    quad = QuadratureSetup((mesh.Δx[1], mesh.Δx[1]), (mesh.pmin[1], mesh.pmin[1]))
+
+    # Exact solution: for g(x, v) = v and v = ones, G = M·v where M is mass matrix
+    Me = assembly_local_matrix_ϕxϕ(mesh, Lagrange{1, 1}())
+    M = assembly_global_matrix(Me, dof_map)
+    v = ones(Float64, dof_map.m)
+    expected_G = M * v
+
+    # Test correctness
+    g(x, v) = v
+    scale = 1.0
+    computed_G = zeros(Float64, dof_map.m)
+    assembly_nonlinearity_G!(computed_G, scale, g, v, mesh, dof_map, quad)
+    @test computed_G ≈ expected_G
+
+    # Test performance
+    alloc = @allocated assembly_nonlinearity_G!(
+        computed_G, scale, g, v, mesh, dof_map, quad)
+    @test alloc == 0
+end
