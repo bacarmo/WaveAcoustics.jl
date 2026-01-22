@@ -109,6 +109,13 @@ Modules = [WaveAcoustics]
 Pages = ["pde_solve.jl"]
 ```
 
+## EDO Solve
+### Crank-Nicolson Method
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["crank_nicolson.jl"]
+```
+
 ## Error norms
 ```@autodocs
 Modules = [WaveAcoustics]
