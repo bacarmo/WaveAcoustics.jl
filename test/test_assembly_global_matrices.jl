@@ -38,7 +38,6 @@ end
     using SparseArrays: sparse, SparseMatrixCSC
     using StaticArrays: SMatrix
     using LinearAlgebra: Symmetric
-    using BenchmarkTools
 
     # Setup
     mesh = CartesianMesh((0.0,), (1.0,), (2^3,))
@@ -136,4 +135,31 @@ end
 
     # Consistency test
     @test M ≈ M_sym
+end
+
+@testitem "assembly_global_matrix_DG: Lagrange{1,1}(), LeftRight(), ∂ₛg(x,v) = 1.0" begin
+    using WaveAcoustics: assembly_global_matrix_DG, assembly_local_matrix_ϕxϕ,
+                         assembly_global_matrix, CartesianMesh, Lagrange, DOFMap, LeftRight,
+                         QuadratureSetup
+    using LinearAlgebra: Symmetric
+
+    # Setup
+    mesh = CartesianMesh((0.0,), (1.0,), (4,))
+    family = Lagrange{1, 1}()
+    dof_map = DOFMap(mesh, family, LeftRight())
+    quad = QuadratureSetup((0.25, 0.25), (0.0, 0.0))
+
+    # Test function and data
+    @inline ∂ₛg(x, s) = 1.0
+    v = ones(Float64, dof_map.m)
+
+    # Reference solution
+    Me = assembly_local_matrix_ϕxϕ(mesh, family)
+    expected_DG_global = assembly_global_matrix(Symmetric(Me), dof_map)
+
+    # Test: Correctness
+    DG_global = assembly_global_matrix_DG(1.0, ∂ₛg, v, mesh, dof_map, quad)
+
+    @test DG_global ≈ expected_DG_global
+    @test size(DG_global) == (dof_map.m, dof_map.m)
 end
