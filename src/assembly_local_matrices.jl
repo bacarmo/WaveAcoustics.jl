@@ -117,8 +117,8 @@ DGₐᵦ = ∫ ϕₐ(ξ) * ϕᵦ(ξ) * ∂ₛg(x(ξ), Vₕ(x(ξ))) dx over Ω = 
 
 # Arguments
 - `DG::AbstractMatrix{T}`: Local matrix (nb × nb), zeroed and filled in-place **only in upper triangle**
-- `∂ₛg::Fun`: Callable ∂ₛg(x, v) → T
-- `v::AbstractVector{T}`: Coefficient vector for Vₕ, length m
+- `∂ₛg::Fun`: Callable ∂ₛg(x, s) → T
+- `v::AbstractVector{T}`: Coefficient vector for Vₕ, length `m`
 - `m::I`: Number of active DOFs
 - `eq::SVector{nb,I}`: Local-to-global DOF mapping for element `e` (EQoLG[e])
 - `xeP::SVector{Npg,T}`: Physical quadrature points (`xᵉ(P) = (Δx/2)*(P + 1) + x_start + (e-1)*Δx`)
