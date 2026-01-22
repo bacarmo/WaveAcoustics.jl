@@ -17,16 +17,12 @@ function pde_solve(
         input_data
 ) where {I <: Integer, T <: Real}
     # ========================================
-    # Spatial and temporal discretization
+    # Spatial discretization
     # ========================================
-    common = input_data.common
-    pmin, pmax = common.pmin, common.pmax
+    pmin, pmax = input_data.common.pmin, input_data.common.pmax
 
     mesh2D = CartesianMesh(pmin, pmax, Nx)
     mesh1D = CartesianMesh((pmin[1],), (pmax[1],), (Nx[1],))
-
-    times = range(zero(T), common.t_final; step = τ)
-    nt = length(times)
 
     # ========================================
     # Quadrature setup (Gauss-Legendre)
@@ -63,6 +59,13 @@ function pde_solve(
     M_m₁xm₂ = [M_m₂xm₂; spzeros(m₁ - m₂, m₂)]
     M_m₂xm₁ = [M_m₂xm₂ spzeros(m₂, m₁ - m₂)]
 
+    matrices = (
+        M_m₁xm₁ = M_m₁xm₁,
+        K_m₁xm₁ = K_m₁xm₁,
+        M_m₂xm₂ = M_m₂xm₂,
+        M_m₁xm₂ = M_m₁xm₂,
+        M_m₂xm₁ = M_m₂xm₁)
+
     # ========================================
     # Compute v⁰ and d⁰
     # ========================================
@@ -78,19 +81,11 @@ function pde_solve(
     compute_r⁰_z⁰!(r⁰, z⁰, M_m₂xm₂, input_data, mesh1D, dof_map_m₂, quad)
 
     # ========================================
-    # Compute L2 error
+    # Compute vⁿ, dⁿ, rⁿ, and zⁿ
     # ========================================
-    L2_error_v = zeros(T, nt)
-    L2_error_d = zeros(T, nt)
-    L2_error_r = zeros(T, nt)
-    L2_error_z = zeros(T, nt)
-
-    L2_error_v[1] = L2_error_2d(input_data.common.v₀, v⁰, mesh2D, dof_map_m₁, quad)
-    L2_error_d[1] = L2_error_2d(input_data.common.u₀, d⁰, mesh2D, dof_map_m₁, quad)
-
-    L2_error_r[1] = L2_error_1d(input_data.common.r₀, r⁰, mesh1D, dof_map_m₂, quad)
-    L2_error_z[1] = L2_error_1d(input_data.common.z₀, z⁰, mesh1D, dof_map_m₂, quad)
+    L2_error = crank_nicolson(
+        v⁰, d⁰, r⁰, z⁰, τ, input_data, mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
 
     return (
-        maximum(L2_error_v), maximum(L2_error_d), maximum(L2_error_r), maximum(L2_error_z))
+        maximum(L2_error.v), maximum(L2_error.d), maximum(L2_error.r), maximum(L2_error.z))
 end
