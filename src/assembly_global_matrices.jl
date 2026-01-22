@@ -119,7 +119,7 @@ DGᵢⱼ = scale * ∫ ϕᵢ(x) * ϕⱼ(x) * ∂ₛg(x, Vₕ(x)) dx over Ω ⊂ 
 - `scale::T`: Scaling factor applied to final result
 - `∂ₛg::Fun`: Callable ∂ₛg(x, v) → T
 - `v::AbstractVector{T}`: Coefficient vector for Vₕ, length `dof_map.m`
-- `mesh::CartesianMesh{1}`: 1D Cartesian mesh
+- `mesh::CartesianMesh{1,I}`: 1D Cartesian mesh
 - `dof_map::DOFMap`: DOF mapping with `EQoLG` connectivity and `m` free DOFs
 - `quad::QuadratureSetup`: Precomputed quadrature data
 
