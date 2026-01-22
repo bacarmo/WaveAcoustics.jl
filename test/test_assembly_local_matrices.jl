@@ -100,3 +100,45 @@ end
     alloc = @allocated assembly_local_matrix_DG!(DG_local, ∂ₛg, v, m, eq, xeP, quad)
     @test alloc == 0
 end
+
+@testitem "assembly_local_matrix_DG!: Lagrange{2,1}(), LeftRightTop(), f(s) = 1.0" begin
+    using WaveAcoustics: assembly_local_matrix_DF!, assembly_local_matrix_ϕxϕ,
+                         CartesianMesh, Lagrange, DOFMap, LeftRightTop, QuadratureSetup
+    using FixedSizeArrays: FixedSizeArray
+
+    # Setup
+    mesh = CartesianMesh((0.0, 0.0), (1.0, 1.0), (4, 3))
+    family = Lagrange{2, 1}()
+    dof_map = DOFMap(mesh, family, LeftRightTop())
+    quad = QuadratureSetup(mesh.Δx, mesh.pmin)
+
+    # Test function and data
+    @inline f(s) = 1.0
+    d = ones(Float64, dof_map.m)
+
+    # Reference solution
+    Me = assembly_local_matrix_ϕxϕ(mesh, family)
+    expected_DF_local = Me * (4 / (mesh.Δx[1] * mesh.Δx[2]))
+
+    # Allocate output
+    num_dof_local = length(quad.φP[1, 1])
+    DF_local = FixedSizeArray{Float64}(undef, num_dof_local, num_dof_local)
+
+    # Test: Correctness
+    assembly_local_matrix_DF!(
+        DF_local, f, d, dof_map.m, dof_map.EQoLG[1], quad.W_φPφP, quad.φP)
+
+    for b in axes(DF_local, 2), a in 1:b # Upper triangle: a ≤ b
+        @test DF_local[a, b] ≈ expected_DF_local[a, b]
+    end
+
+    # Test: Performance (allocation-free operation)
+    ## Warn: Direct field access (dof_map.m, dof_map.EQoLG[1], quad.W_φPφP, quad.φP) is causing allocations. Why?
+    m = dof_map.m
+    eq = dof_map.EQoLG[1]
+    W_φPφP = quad.W_φPφP
+    φP = quad.φP
+
+    alloc = @allocated assembly_local_matrix_DF!(DF_local, f, d, m, eq, W_φPφP, φP)
+    @test alloc == 0
+end

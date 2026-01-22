@@ -167,3 +167,61 @@ function assembly_local_matrix_DG!(
 
     return nothing
 end
+
+"""
+    assembly_local_matrix_DF!(DF, f, d, m, eq, W_φPφP, φP)
+
+DFₐᵦ = ∬ φₐ(ξ,η) φᵦ(ξ,η) f(Uₕ(x(ξ,η),y(ξ,η))) dξ dη over reference element Ω = (-1,1)², with Uₕ(x(ξ,η),y(ξ,η)) = Σ d[eq[j]] φⱼ(ξ,η).
+
+# Arguments
+- `DF::AbstractMatrix{T}`: Local matrix (nb × nb), zeroed and filled in-place **only in upper triangle**
+- `f::Fun`: Callable f(s) → T
+- `d::AbstractVector{T}`: Coefficient vector for Uₕ, length `m`
+- `m::I`: Number of active DOFs
+- `eq::SVector{nb,I}`: Local-to-global DOF mapping for element `e` (EQoLG[e])
+- `W_φPφP::SMatrix{Npg,Npg,<:SMatrix{nb,nb,T}}`: Precomputed `Wᵢ⋅Wⱼ⋅φₐ(Pᵢ,Pⱼ)⋅φᵦ(Pᵢ,Pⱼ)` (NO Jacobian, NO scale)
+- `φP::SMatrix{Npg,Npg,SVector{nb,T}}`: Precomputed `φ(Pᵢ,Pⱼ)`
+
+# Type Parameters
+- `T`: Floating point type
+- `I`: Integer type
+- `nb`: Number of basis functions per element
+- `Npg`: Number of quadrature points per element in each axis direction 
+- `Fun`: Function type
+
+# Notes
+- Scaling factor and Jacobian are NOT applied here
+"""
+function assembly_local_matrix_DF!(
+        DF::AbstractMatrix{T},
+        f::Fun,
+        d::AbstractVector{T},
+        m::I,
+        eq::SVector{nb, I},
+        W_φPφP::SMatrix{Npg, Npg, <:SMatrix{nb, nb, T}},
+        φP::SMatrix{Npg, Npg, SVector{nb, T}}
+) where {T <: AbstractFloat, I <: Integer, nb, Npg, Fun}
+    fill!(DF, zero(T))
+
+    for j in 1:Npg, i in 1:Npg
+        # Compute Uₕ(x(ξ,η),y(ξ,η)) at quadrature point (Pᵢ,Pⱼ)
+        u_val = zero(T)
+        φPᵢⱼ = φP[i, j]
+        for a in 1:nb
+            ia = eq[a]
+            ia > m && continue
+            u_val = muladd(d[ia], φPᵢⱼ[a], u_val)
+        end
+
+        # Evaluate f at current point
+        f_val = f(u_val)
+
+        # Accumulate contributions to local matrix
+        W_φφ = W_φPφP[i, j]
+        @inbounds for b in 1:nb, a in 1:b # Upper triangle: a ≤ b
+            DF[a, b] = muladd(W_φφ[a, b], f_val, DF[a, b])
+        end
+    end
+
+    return nothing
+end
