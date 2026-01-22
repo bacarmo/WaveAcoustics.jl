@@ -180,3 +180,76 @@ function assembly_global_matrix_DG(
 
     return Symmetric(DG_upper, :U)
 end
+
+"""
+    assembly_global_matrix_DF(scale, f, d, m, EQoLG, Δx, Δy, W_φPφP, φP)
+
+DFᵢⱼ = scale * ∬ φᵢ(x,y) * φⱼ(x,y) * f(Uₕ(x,y)) dx dy over Ω = (0,1)², with Uₕ(x,y) = Σ d[k] φₖ(x,y).
+
+# Arguments
+- `scale::T`: Scaling factor applied to final result
+- `f::Fun`: Callable f(s) → T
+- `d::AbstractVector{T}`: Coefficient vector for Uₕ, length m
+- `mesh::CartesianMesh{2, I}`: 2D Cartesian mesh
+- `dof_map::DOFMap`: DOF mapping with `EQoLG` connectivity and `m` free DOFs
+- `quad::QuadratureSetup`: Precomputed quadrature data
+
+# Returns
+- `Symmetric{T, SparseMatrixCSC{T,I}}`: Assembled symmetric global matrix (m×m)
+"""
+function assembly_global_matrix_DF(
+        scale::T,
+        f::Fun,
+        d::AbstractVector{T},
+        mesh::CartesianMesh{2, I},
+        dof_map::DOFMap,
+        quad::QuadratureSetup
+) where {T <: AbstractFloat, I <: Integer, Fun}
+    EQoLG = dof_map.EQoLG
+    m = dof_map.m
+    Ne = length(EQoLG)
+
+    W_φPφP = quad.W_φPφP
+    φP = quad.φP
+    num_local_dof = length(φP[1, 1])
+
+    # Pre-allocate triplet arrays (row indices, column indices, values) for sparse assembly
+    entries_per_element = (num_local_dof * (num_local_dof + 1)) ÷ 2
+    capacity = Ne * entries_per_element
+    I_rows = Vector{I}(undef, capacity)
+    J_cols = Vector{I}(undef, capacity)
+    V_vals = Vector{T}(undef, capacity)
+    local_matrix = FixedSizeArray{T}(undef, num_local_dof, num_local_dof)
+
+    scale_jacobian = scale * (mesh.Δx[1] * mesh.Δx[2] / 4)
+
+    idx = 0
+    for e in 1:Ne
+        eq = EQoLG[e]
+        assembly_local_matrix_DF!(local_matrix, f, d, m, eq, W_φPφP, φP)
+
+        for b in 1:num_local_dof
+            jb = eq[b]
+            jb > m && continue
+
+            for a in 1:b # Upper triangle: a ≤ b
+                ia = eq[a]
+                ia > m && continue
+
+                idx += 1
+                I_rows[idx] = ia  # Assuming a ≤ b ⇒ ia ≤ jb
+                J_cols[idx] = jb
+                V_vals[idx] = local_matrix[a, b] * scale_jacobian
+            end
+        end
+    end
+
+    # Trim to actual number of entries and assemble sparse matrix
+    resize!(I_rows, idx)
+    resize!(J_cols, idx)
+    resize!(V_vals, idx)
+
+    DF_upper = sparse(I_rows, J_cols, V_vals, m, m)
+
+    return Symmetric(DF_upper, :U)
+end
