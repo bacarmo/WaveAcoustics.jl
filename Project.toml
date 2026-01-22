@@ -7,6 +7,7 @@ authors = ["Bruno Alves do Carmo <bruno.carmo@ppgi.ufrj.br>"]
 projects = ["docs"]
 
 [deps]
+FixedSizeArrays = "3821ddf9-e5b5-40d5-8e25-6813ab96b5e2"
 GaussQuadrature = "d54b0c1a-921d-58e0-8e36-89d8069c0969"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
@@ -14,6 +15,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+FixedSizeArrays = "1.2.0"
 GaussQuadrature = "0.5.8"
 LinearAlgebra = "1.12.0"
 Printf = "1.11.0"
