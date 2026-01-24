@@ -145,7 +145,62 @@ function crank_nicolson(
         counter = 0
         while maximum(abs, minusHX) > epsilon
             # Compute Jacobian DHX 
+            compute_DHX₁₁!(DHX₁₁, A₁₁, v̂ⁿ_m₂, d̂ⁿ, input_data, mesh1D, mesh2D,
+                dof_map_m₁, dof_map_m₂, quad, τα_2, τ²_4, m₂)
+            DHX = [DHX₁₁ A₁₂; A₂₁ A₂₂]
+
+            # Solve linear system: DHX * sol = -H(X)
+            sol = DHX \ minusHX
+
+            # Update solution X 
+            vⁿ .+= view(sol, 1:m₁)
+            rⁿ .+= view(sol, (m₁ + 1):(m₁ + m₂))
+
+            # Update auxiliary variables d̂ⁿ, v̂ⁿ_m₂
+            @. d̂ⁿ = τ_4 * (vⁿ + vⁿ⁻¹) + dⁿ⁻¹
+            v̂ⁿ_m₂ .= 0.5 .* (view(vⁿ, 1:m₂) .+ view(vⁿ⁻¹, 1:m₂))
+
+            # Recompute residual minusHX
+            compute_minusHX!(
+                minusHX, vⁿ, v̂ⁿ_m₂, d̂ⁿ, rⁿ, A₁₁, A₂₂, matrices.M_m₂xm₂, Lm₁, Lm₂,
+                input_data, mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad,
+                τ, τq₄_2, α_half, cache)
+
+            # Check convergence
+            counter += 1
+            if maximum(abs, sol) < epsilon || counter ≥ max_newton_iterations
+                break
+            end
         end
+
+        # After completing the Newton's method, update displacement
+        @. dⁿ = τ_2 * (vⁿ + vⁿ⁻¹) + dⁿ⁻¹
+        @. zⁿ = τ_2 * (rⁿ + rⁿ⁻¹) + zⁿ⁻¹
+
+        # Compute L² errors at current time
+        tₙ = times[n + 1]
+        L2_error.v[n + 1] = L2_error_2d(
+            (x, y) -> input_data.v(x, y, tₙ), vⁿ,
+            mesh2D, dof_map_m₁, quad
+        )
+        L2_error.d[n + 1] = L2_error_2d(
+            (x, y) -> input_data.u(x, y, tₙ), dⁿ,
+            mesh2D, dof_map_m₁, quad
+        )
+        L2_error.r[n + 1] = L2_error_1d(
+            x -> input_data.r(x, tₙ), rⁿ,
+            mesh1D, dof_map_m₂, quad
+        )
+        L2_error.z[n + 1] = L2_error_1d(
+            x -> input_data.z(x, tₙ), zⁿ,
+            mesh1D, dof_map_m₂, quad
+        )
+
+        # Rotate array references (no allocation)
+        vⁿ⁻¹, vⁿ = vⁿ, vⁿ⁻¹
+        dⁿ⁻¹, dⁿ = dⁿ, dⁿ⁻¹
+        rⁿ⁻¹, rⁿ = rⁿ, rⁿ⁻¹
+        zⁿ⁻¹, zⁿ = zⁿ, zⁿ⁻¹
     end
 
     return L2_error
@@ -385,6 +440,32 @@ function compute_minusHX!(
     for i in 1:m₂
         minusHX[m₁ + i] = -τq₄_2 * cache.vec₁m₂[i] - cache.vec₂m₂[i] + Lm₂[i]
     end
+
+    return nothing
+end
+
+"""
+    compute_DHX₁₁!(DHX₁₁, A₁₁, v̂ⁿ_m₂, d̂ⁿ, input_data, mesh1D, mesh2D,
+                   dof_map_m₁, dof_map_m₂, quad, τα_2, τ²_4, m₂)
+
+```
+DHX₁₁ = A₁₁ + (τ²/4)⋅DF(d̂ⁿ) + (τ/2)α(tₙ₋₁/₂)⋅DG(v̂ⁿ_m₂)
+```
+"""
+function compute_DHX₁₁!(
+        DHX₁₁, A₁₁, v̂ⁿ_m₂, d̂ⁿ, input_data, mesh1D, mesh2D,
+        dof_map_m₁, dof_map_m₂, quad, τα_2, τ²_4, m₂)
+    # Compute (τ/2)α(tₙ₋₁/₂)⋅DG(v̂ⁿ_m₃)
+    DG = assembly_global_matrix_DG(
+        τα_2, input_data.common.∂ₛg, v̂ⁿ_m₂, mesh1D, dof_map_m₂, quad)
+
+    # Compute (τ²/4)⋅DF(d̂ⁿ)
+    DF = assembly_global_matrix_DF(
+        τ²_4, input_data.common.df, d̂ⁿ, mesh2D, dof_map_m₁, quad)
+
+    # Compute DHX₁₁
+    @. DHX₁₁.data = A₁₁.data + DF.data
+    @. DHX₁₁.data[1:m₂, 1:m₂] += DG.data
 
     return nothing
 end
