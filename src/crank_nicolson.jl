@@ -132,7 +132,7 @@ function crank_nicolson(
         @. vⁿ = vⁿ⁻¹
         @. rⁿ = rⁿ⁻¹
         @. d̂ⁿ = dⁿ⁻¹
-        @. v̂ⁿ_m₂ = view(vⁿ⁻¹, 1:m₂)
+        v̂ⁿ_m₂ .= view(vⁿ⁻¹, 1:m₂)
 
         # Compute initial residual
         compute_minusHX!(
