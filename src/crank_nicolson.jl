@@ -144,7 +144,7 @@ function crank_nicolson(
         # Newton iteration
         counter = 0
         while maximum(abs, minusHX) > epsilon
-            # Compute Jacobian DHX 
+            # Compute Jacobian DHX
             compute_DHX₁₁!(DHX₁₁, A₁₁, v̂ⁿ_m₂, d̂ⁿ, input_data, mesh1D, mesh2D,
                 dof_map_m₁, dof_map_m₂, quad, τα_2, τ²_4, m₂)
             DHX = [DHX₁₁ A₁₂; A₂₁ A₂₂]
@@ -302,15 +302,15 @@ function compute_Lm₁!(Lm₁, vⁿ⁻¹, rⁿ⁻¹, vec_d_v, matrices, input_da
     τα_2 = τα / 2
 
     # Initialize Lm₁ = M_m₁×m₁⋅vⁿ⁻¹
-    LA.mul!(Lm₁, matrices.M_m₁xm₁, vⁿ⁻¹)
+    mul!(Lm₁, matrices.M_m₁xm₁, vⁿ⁻¹)
 
     # Compute K_m₁xm₁⋅(dⁿ⁻¹+(τ/4)⋅vⁿ⁻¹)
     # (will be scaled by -τ⋅α(tₙ₋₁/₂))
-    LA.mul!(cache.vec₁m₁, matrices.K_m₁xm₁, vec_d_v)
+    mul!(cache.vec₁m₁, matrices.K_m₁xm₁, vec_d_v)
 
     # Compute M_m₂xm₂⋅rⁿ⁻¹
     # (will be scaled by (τ/2)⋅α(tₙ₋₁/₂))
-    LA.mul!(cache.vec₁m₂, matrices.M_m₂xm₂, rⁿ⁻¹)
+    mul!(cache.vec₁m₂, matrices.M_m₂xm₂, rⁿ⁻¹)
 
     # Compute τ⋅F(f₁(tₙ₋₁/₂))
     assembly_rhs_2d!(
@@ -349,7 +349,7 @@ function compute_Lm₂!(Lm₂, rⁿ⁻¹, zⁿ⁻¹, vⁿ⁻¹, matrices, input_
 
     # Compute M_m₂×m₂⋅vⁿ⁻¹[1:m₂]
     # (will be scaled by (τ/2)q₄)
-    LA.mul!(cache.vec₁m₂, matrices.M_m₂xm₂, view(vⁿ⁻¹, 1:m₂))
+    mul!(cache.vec₁m₂, matrices.M_m₂xm₂, view(vⁿ⁻¹, 1:m₂))
 
     # Compute τ⋅F(f₂(tₙ₋₁/₂))
     assembly_rhs_1d!(cache.vec₂m₂, x -> input_data.f₂(x, t_half),
