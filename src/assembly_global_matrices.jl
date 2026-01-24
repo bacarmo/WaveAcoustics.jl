@@ -182,14 +182,14 @@ function assembly_global_matrix_DG(
 end
 
 """
-    assembly_global_matrix_DF(scale, f, d, m, EQoLG, Δx, Δy, W_φPφP, φP)
+    assembly_global_matrix_DF(scale, f, d, mesh, dof_map, quad)
 
-DFᵢⱼ = scale * ∬ φᵢ(x,y) * φⱼ(x,y) * f(Uₕ(x,y)) dx dy over Ω = (0,1)², with Uₕ(x,y) = Σ d[k] φₖ(x,y).
+DFᵢⱼ = scale * ∬ φᵢ(x,y) * φⱼ(x,y) * f(Uₕ(x,y)) dx dy over Ω, with Uₕ(x,y) = Σ d[k] φₖ(x,y).
 
 # Arguments
 - `scale::T`: Scaling factor applied to final result
 - `f::Fun`: Callable f(s) → T
-- `d::AbstractVector{T}`: Coefficient vector for Uₕ, length m
+- `d::AbstractVector{T}`: Coefficient vector for Uₕ, length `dof_map.m`
 - `mesh::CartesianMesh{2, I}`: 2D Cartesian mesh
 - `dof_map::DOFMap`: DOF mapping with `EQoLG` connectivity and `m` free DOFs
 - `quad::QuadratureSetup`: Precomputed quadrature data
