@@ -33,6 +33,8 @@ function crank_nicolson(
         v⁰, d⁰, r⁰, z⁰, τ, input_data, mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
     T = eltype(v⁰)
     m₁, m₂ = length(v⁰), length(r⁰)
+    @assert m₁ == dof_map_m₁.m
+    @assert m₂ == dof_map_m₂.m
 
     times = range(zero(T), input_data.common.t_final; step = τ)
     nt = length(times)
