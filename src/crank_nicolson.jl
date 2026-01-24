@@ -114,6 +114,7 @@ function crank_nicolson(
         # Compute time at half-step
         t_half = (n - 0.5) * τ
         α_half = input_data.common.α(t_half)
+        τα_2 = τ_2 * α_half
 
         # Compute dⁿ⁻¹ + (τ/4)vⁿ⁻¹
         @. vec_d_v = muladd(τ_4, vⁿ⁻¹, dⁿ⁻¹)
