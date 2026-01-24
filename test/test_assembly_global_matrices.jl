@@ -164,6 +164,36 @@ end
     @test size(DG_global) == (dof_map.m, dof_map.m)
 end
 
+@testitem "assembly_global_matrix_DG: Lagrange{1,1}(), LeftRight(), ∂ₛg(x,v) = x²+v²" begin
+    using WaveAcoustics: assembly_global_matrix_DG, CartesianMesh, Lagrange, DOFMap,
+                         LeftRight, QuadratureSetup
+
+    # Setup
+    mesh = CartesianMesh((0.0,), (1.0,), (4,))
+    family = Lagrange{1, 1}()
+    dof_map = DOFMap(mesh, family, LeftRight())
+    quad = QuadratureSetup((0.25, 0.25), (0.0, 0.0))
+
+    # Test function and data
+    @inline ∂ₛg(x, s) = x^2 + s^2
+    v = ones(Float64, dof_map.m)
+
+    # Reference solution
+    #! format: off
+    expected_DG_global =  (1/8)*[
+        17/40 + 11/15      61/160             0.0;
+        61/160             191/240 + 211/240  223/480;
+        0.0                223/480             59/60 + 101/120
+        ]
+    #! format: on
+
+    # Test: Correctness
+    DG_global = assembly_global_matrix_DG(1.0, ∂ₛg, v, mesh, dof_map, quad)
+
+    @test DG_global ≈ expected_DG_global
+    @test size(DG_global) == (dof_map.m, dof_map.m)
+end
+
 @testitem "assembly_global_matrix_DF: Lagrange{2,1}(), LeftRightTop(), f(s) = 1.0" begin
     using WaveAcoustics: assembly_global_matrix_DF, assembly_local_matrix_ϕxϕ,
                          assembly_global_matrix, CartesianMesh, Lagrange, DOFMap,
