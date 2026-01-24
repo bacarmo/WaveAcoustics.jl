@@ -101,6 +101,46 @@ end
     @test alloc == 0
 end
 
+@testitem "assembly_local_matrix_DG!: Lagrange{1,1}(), LeftRight(), ∂ₛg(x,v) = x²+v²" begin
+    using WaveAcoustics: assembly_local_matrix_DG!, CartesianMesh, Lagrange, DOFMap,
+                         LeftRight, QuadratureSetup
+    using FixedSizeArrays: FixedSizeArray
+
+    # Setup
+    mesh = CartesianMesh((0.0,), (1.0,), (4,))
+    family = Lagrange{1, 1}()
+    dof_map = DOFMap(mesh, family, LeftRight())
+    Δx = mesh.Δx[1]
+    quad = QuadratureSetup((Δx, Δx), (0.0, 0.0))
+
+    # Test function and data
+    @inline ∂ₛg(x, s) = x^2 + s^2
+    v = ones(Float64, dof_map.m)
+
+    # Reference solution for element e = 1, 2, 3, 4
+    expected_DG_local = (
+        [17/240 17/160; 17/160 17/40],    # e=1: [0.00, 0.25], Vₕ=(1+ξ)/2
+        [11/15 61/160; 61/160 191/240],   # e=2: [0.25, 0.50], Vₕ=1
+        [211/240 223/480; 223/480 59/60], # e=3: [0.50, 0.75], Vₕ=1
+        [101/120 57/160; 57/160 157/240]  # e=4: [0.75, 1.00], Vₕ=(1-ξ)/2
+    )
+
+    # Allocate output
+    num_dof_local = length(quad.ϕP[1])
+    DG_local = FixedSizeArray{Float64}(undef, num_dof_local, num_dof_local)
+
+    # Test: Correctness
+    @testset "Element $e" for e in 1:4
+        eq = dof_map.EQoLG[e]
+        xeP = quad.xP .+ (e - 1) * Δx
+        assembly_local_matrix_DG!(DG_local, ∂ₛg, v, dof_map.m, eq, xeP, quad)
+
+        @testset "Entry ($a,$b)" for b in axes(DG_local, 2), a in 1:b # Upper triangle: a ≤ b
+            @test DG_local[a, b] ≈ expected_DG_local[e][a, b]
+        end
+    end
+end
+
 @testitem "assembly_local_matrix_DG!: Lagrange{2,1}(), LeftRightTop(), f(s) = 1.0" begin
     using WaveAcoustics: assembly_local_matrix_DF!, assembly_local_matrix_ϕxϕ,
                          CartesianMesh, Lagrange, DOFMap, LeftRightTop, QuadratureSetup
