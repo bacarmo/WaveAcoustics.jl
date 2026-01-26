@@ -156,7 +156,8 @@ spatial discretization error.
 """
 function _convergence_test_spatial(Nx_exp_range, τ_fixed::Real, input_data)
     Nx_values = [2^i for i in Nx_exp_range]
-    h_values = [_compute_element_diameter(Nx, input_data.pmin, input_data.pmax)
+    h_values = [_compute_element_diameter(
+                    Nx, input_data.common.pmin, input_data.common.pmax)
                 for Nx in Nx_values]
     τ_values = fill(τ_fixed, length(Nx_values))
 
@@ -174,11 +175,12 @@ Varies time step τ while keeping mesh size h constant to isolate temporal
 discretization error.
 """
 function _convergence_test_temporal(τ_exp_range, Nx_fixed::Int, input_data)
-    τ_values = [2^(-i) for i in τ_exp_range]
+    τ_values = [1 / 2^i for i in τ_exp_range]
     n_refinements = length(τ_values)
 
     Nx_values = fill(Nx_fixed, n_refinements)
-    h_fixed = _compute_element_diameter(Nx_fixed, input_data.pmin, input_data.pmax)
+    h_fixed = _compute_element_diameter(
+        Nx_fixed, input_data.common.pmin, input_data.common.pmax)
     h_values = fill(h_fixed, n_refinements)
 
     test_info = "Temporal convergence (Nx = $Nx_fixed, h ≈ $(round(h_fixed; sigdigits=4)) fixed)"
