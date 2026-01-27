@@ -15,11 +15,10 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "Theory" => "theory/model.md",
-        "Methods" => [
-            "Overview" => "methods/overview.md",
-            "Method 1" => "methods/method1.md",
-            "Method 2" => "methods/method2.md"
+        "Model" => "theory/model.md",
+        "Approximation Problem" => [
+            "methods/method1.md",
+            "methods/method2.md"
         ],
         "Examples" => [
             "Overview" => "examples/overview.md",
