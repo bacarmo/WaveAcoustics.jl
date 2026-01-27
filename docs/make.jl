@@ -10,7 +10,8 @@ makedocs(;
     format = Documenter.HTML(;
         canonical = "https://bacarmo.github.io/WaveAcoustics.jl",
         edit_link = "main",
-        assets = String[]
+        assets = String[],
+        mathengine = MathJax3() # The options are either KaTeX (default), MathJax v2, or MathJax v3, enabled by passing an instance of KaTeX, MathJax2, or MathJax3 objects, respectively.
     ),
     pages = [
         "Home" => "index.md",
