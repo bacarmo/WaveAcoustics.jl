@@ -52,3 +52,69 @@ for ``n = \text{“1,0''},\,1,\,2,\,\ldots``, with ``U^0, V^0 \in \mathcal{V}_{m
     \frac{3w^{n-1}-w^{n-2}}{2},      & \text{if } n \geq 2.
     \end{cases}
     ```
+
+## Matrix formulation
+Representing the approximate solutions in terms of the basis functions,
+```math
+U^n = \sum_{j=1}^{m_1} d_j^n\varphi_j,\;
+V^n = \sum_{j=1}^{m_1} v_j^n\varphi_j,\;
+Z^n = \sum_{j=1}^{m_2} z_j^n\phi_j,\;
+R^n = \sum_{j=1}^{m_2} r_j^n\phi_j,
+```
+and choosing test functions ``\varphi=\varphi_i`` for ``i = 1, \ldots, m_1`` and ``\phi=\phi_i`` for ``i = 1, \ldots, m_2``, we obtain the system
+```math
+\begin{align}
+\label{def:approx2:mat_form}
+\begin{aligned}
+& M^{m_1\times m_1}\bar{\partial}v^n
++ \alpha(t_{n-\frac{1}{2}})\Big[  
+    K^{m_1\times m_1}\widehat{d}^n
+  - M^{m_1\times m_2}\widehat{r}^n
+  + G^{m_1}(v^{\ast n})\Big]
++ F^{m_1}(d^{\ast n})
+= \mathcal{F}_1^{m_1}(t_{n-\frac{1}{2}}),
+\\
+& M^{m_2\times m_2}\big[
+  q_1\bar{\partial}r^n
++ q_2\widehat{r}^n
++ q_3\widehat{z}^n]
++ q_4M^{m_2\times m_1}v^{\ast n}
+= \mathcal{F}_2^{m_2}(t_{n-\frac{1}{2}}),
+\\
+& \bar{\partial}d^n = \widehat{v}^n,\quad
+\bar{\partial}z^n = \widehat{r}^n.
+\end{aligned}
+\end{align}
+```
+
+## Linear system
+Using ``d^n = d^{n-1} + \frac{\tau}{2}(v^n+v^{n-1})`` and ``z^n = z^{n-1} + \frac{\tau}{2}(r^n+r^{n-1})`` into system \eqref{def:approx2:mat_form} yields
+```math
+\begin{align*}
+%\label{def:approx2:mat_form_opt2}
+\begin{aligned}
+(q_1+\frac{\tau}{2}q_2+\frac{\tau^2}{4}q_3) M^{m_2\times m_2} r^n
+&=
+(q_1-\frac{\tau}{2}q_2-\frac{\tau^2}{4}q_3) M^{m_2\times m_2} r^{n-1}
+-\tau q_3 M^{m_2\times m_2} z^{n-1}
+\\
+&-\tau q_4 M^{m_2\times m_1} v^{\ast n}
++ \tau\mathcal{F}_2^{m_2}(t_{n-\frac{1}{2}}),
+\\[10pt]
+\Big[
+  M^{m_1\times m_1} + \frac{\tau^2\alpha^{n-\frac{1}{2}}}{4}K^{m_1\times m_1}
+\Big] v^n
+&=
+  M^{m_1\times m_1}v^{n-1}
+\\
+& - \tau\alpha^{n-\frac{1}{2}}\Big[
+K^{m_1\times m_1}\Big(\frac{\tau}{4}v^{n-1}+d^{n-1}\Big)
+- M^{m_1\times m_2}\widehat{r}^n
++ G^{m_1}(v^{*n})
+\Big]
+\\
+& - \tau F^{m_1}(d^{*n})
++ \tau\mathcal{F}_1^{m_1}(t_{n-\frac{1}{2}}).
+\end{aligned}
+\end{align*}
+```
