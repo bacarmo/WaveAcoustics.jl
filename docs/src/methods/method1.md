@@ -94,8 +94,7 @@ and choosing test functions ``\varphi=\varphi_i`` for ``i = 1, \ldots, m_1`` and
     \end{aligned}
     ```
 
-## Nonlinear solver
-
+## Nonlinear system
 Using ``d^n = d^{n-1} + \frac{\tau}{2}(v^n+v^{n-1})`` and ``z^n = z^{n-1} + \frac{\tau}{2}(r^n+r^{n-1})`` into system \eqref{def:approx1:mat_form} yields
 ```math
 \label{prob1:nonlinear_system}
