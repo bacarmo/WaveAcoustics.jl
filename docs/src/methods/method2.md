@@ -118,3 +118,19 @@ K^{m_1\times m_1}\Big(\frac{\tau}{4}v^{n-1}+d^{n-1}\Big)
 \end{aligned}
 \end{align*}
 ```
+
+!!! details "Note"
+    The computation of ``r^n`` can be simplified by multiplying both sides by the inverse of ``(q_1+\frac{\tau}{2}q_2+\frac{\tau^2}{4}q_3) M^{m_2\times m_2}``.
+    Furthermore, for the domain considered in the algorithm implementation, ``M^{m_2\times m_1}v^{\ast n}\equiv M^{m_2\times m_2}v^{\ast n}[1:m_2]`` holds, yielding
+    ```math
+    r^n 
+    = \frac{q_1 - \frac{\tau}{2}q_2 
+    - \frac{\tau^2}{4}q_3}{q_1+\frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} r^{n-1}
+    - \frac{\tau q_3}{q_1 + \frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} z^{n-1}
+    - \frac{\tau q_4}{q_1 + \frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} v^{\ast n}[1:m_2]
+    + s^n,
+    ```
+    where ``s^n`` is obtained from
+    ```math
+    M^{m_2\times m_2} s^n = \frac{\tau}{q_1 + \frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} \mathcal{F}_2^{m_2}(t_{n-\frac{1}{2}}).
+    ```
