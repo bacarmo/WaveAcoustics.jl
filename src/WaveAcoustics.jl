@@ -29,6 +29,7 @@ include("pde_inputdata.jl")
 include("initial_solution.jl")
 include("error_norms.jl")
 include("crank_nicolson.jl")
+include("crank_nicolson_linearized.jl")
 include("pde_solve.jl")
 include("convergence_test.jl")
 end
