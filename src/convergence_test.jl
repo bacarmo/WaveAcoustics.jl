@@ -36,7 +36,7 @@ results = convergence_test(:coupled, Nx_exp_range=3:6)
 results = convergence_test(:spatial, Nx_exp_range=3:6, τ_fixed=2^(-7))
 
 # Temporal convergence with fixed spatial grid
-results = convergence_test(:temporal, τ_exp_range=3:6, Nx_fixed=2^7)
+results = convergence_test(:temporal, τ_exp_range=3:6, Nx_fixed=2^8)
 
 # Display results
 print_convergence_table(results)
@@ -56,7 +56,7 @@ function convergence_test(test_type::Symbol;
         Nx_exp_range = 3:6,
         τ_fixed::Real = 2^(-7),
         τ_exp_range = 3:6,
-        Nx_fixed::Int = 2^7,
+        Nx_fixed::Int = 2^8,
         input_data = example1_manufactured())
 
     # Validate domain specification
