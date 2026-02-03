@@ -3,7 +3,7 @@ module WaveAcoustics
 using StaticArrays: SVector, SMatrix, @SVector, @SMatrix
 using GaussQuadrature: legendre
 using Printf: @printf
-using SparseArrays: sparse, spzeros
+using SparseArrays: sparse, spzeros, SparseMatrixCSC
 using LinearAlgebra: Symmetric, lmul!, cholesky, ldiv!, mul!
 using FixedSizeArrays: FixedSizeArray
 
