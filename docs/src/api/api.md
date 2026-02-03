@@ -116,6 +116,12 @@ Modules = [WaveAcoustics]
 Pages = ["crank_nicolson.jl"]
 ```
 
+### Linearized Crank-Nicolson Method
+```@autodocs
+Modules = [WaveAcoustics]
+Pages = ["crank_nicolson_linearized.jl"]
+```
+
 ## Error norms
 ```@autodocs
 Modules = [WaveAcoustics]
