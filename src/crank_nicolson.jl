@@ -5,33 +5,43 @@
 Solve coupled wave-acoustic PDE system using Crank-Nicolson time integration.
 
 # Arguments
-- `v⁰::Vector`: Initial velocity field
-- `d⁰::Vector`: Initial displacement field  
-- `r⁰::Vector`: Initial boundary velocity
-- `z⁰::Vector`: Initial boundary displacement
-- `τ::Real`: Time step size
+- `v⁰::AbstractVector{T}`: Initial wave velocity in Ω
+- `d⁰::AbstractVector{T}`: Initial wave displacement in Ω
+- `r⁰::AbstractVector{T}`: Initial acoustic velocity on Γ₁
+- `z⁰::AbstractVector{T}`: Initial acoustic displacement on Γ₁
+- `τ::T`: Time step size
 - `input_data`: Problem configuration with manufactured solution
-- `mesh1D`: 1D mesh for boundary (Γ₀)
-- `mesh2D`: 2D mesh for domain (Ω)
-- `dof_map_m₁`: DOF mapping for 2D space
-- `dof_map_m₂`: DOF mapping for 1D boundary
-- `quad`: Quadrature setup
-- `matrices::SystemMatrices`: Global assembled matrices
+- `mesh1D::CartesianMesh{1}`: 1D mesh for boundary Γ₁
+- `mesh2D::CartesianMesh{2}`: 2D mesh for domain Ω
+- `dof_map_m₁::DOFMap`: DOF mapping for 2D finite element space
+- `dof_map_m₂::DOFMap`: DOF mapping for 1D boundary space
+- `quad::QuadratureSetup`: Precomputed quadrature data
+- `matrices`: Preassembled global matrices
 
 # Returns
 Named tuple with L² errors at each time step:
-- `v`: Velocity errors
-- `d`: Displacement errors  
-- `r`: Boundary velocity errors
-- `z`: Boundary displacement errors
+- `v`: Wave velocity errors in Ω
+- `d`: Wave displacement errors in Ω
+- `r`: Acoustic velocity errors on Γ₁
+- `z`: Acoustic displacement errors on Γ₁
 
 # Algorithm
 Uses Crank-Nicolson for time discretization with Newton iteration to handle nonlinearities f(u) and g(x,v). 
 The method is second-order accurate in time.
 """
 function crank_nicolson(
-        v⁰, d⁰, r⁰, z⁰, τ, input_data, mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
-    T = eltype(v⁰)
+        v⁰::AbstractVector{T},
+        d⁰::AbstractVector{T},
+        r⁰::AbstractVector{T},
+        z⁰::AbstractVector{T},
+        τ::T,
+        input_data,
+        mesh1D::CartesianMesh{1},
+        mesh2D::CartesianMesh{2},
+        dof_map_m₁::DOFMap,
+        dof_map_m₂::DOFMap,
+        quad::QuadratureSetup,
+        matrices) where {T <: Real}
     m₁, m₂ = length(v⁰), length(r⁰)
     @assert m₁ == dof_map_m₁.m
     @assert m₂ == dof_map_m₂.m
