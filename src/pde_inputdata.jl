@@ -234,3 +234,76 @@ function example1_zero_source(::Type{T} = Float64) where {T}
     common = example1_common_data(T)
     return zero_source_case(common)
 end
+
+# ============================================================================
+# Example 2
+# ============================================================================
+
+"""
+    example2_common_data([T=Float64]) -> PDECommonData{T}
+
+Ω = ]0,1[², f(s) = 0, g(x,s) = (1+exp(-x²))s, u₀(x,y) = (x^2.4 - x) * (y^2.4 - 1) * 4, z₀(x) = sinpi(x).
+"""
+function example2_common_data(::Type{T} = Float64) where {T}
+    return PDECommonData(
+        pmin = (zero(T), zero(T)),
+        pmax = (one(T), one(T)),
+        t_final = one(T),
+        q₁ = T(1),
+        q₂ = T(1),
+        q₃ = T(1),
+        q₄ = T(1),
+        α = t -> one(T) + exp(-t),
+        f = s -> zero(T),
+        df = s -> zero(T),
+        g = (x, s) -> (1 + exp(-x * x)) * s,
+        ∂ₛg = (x, s) -> (1 + exp(-x * x)),
+        u₀ = (x, y) -> (x^2.4 - x) * (y^2.4 - 1) * 4,
+        ∂ₓu₀ = (x, y) -> (2.4 * x^1.4 - 1) * (y^2.4 - 1) * 4,
+        ∂ᵧu₀ = (x, y) -> (x^2.4 - x) * (2.4 * y^1.4) * 4,
+        v₀ = (x, y) -> zero(T),
+        ∂ₓv₀ = (x, y) -> zero(T),
+        ∂ᵧv₀ = (x, y) -> zero(T),
+        z₀ = x -> sinpi(x),
+        r₀ = x -> zero(T)
+    )
+end
+
+"""
+    example2_manufactured([T=Float64]) -> PDEInputData{T}
+
+Example 2 with manufactured solutions for convergence study.
+"""
+function example2_manufactured(::Type{T} = Float64) where {T}
+    common = example2_common_data(T)
+    ymin = common.pmin[2]
+
+    # Analytical solutions
+    u = (x, y, t) -> (x^2.4 - x) * (y^2.4 - 1) * (4 + t^2)
+    v = (x, y, t) -> (x^2.4 - x) * (y^2.4 - 1) * (2 * t)
+    z = (x, t) -> sinpi(x) - (1 + exp(-x * x)) * (x^2.4 - x) * t^2
+    r = (x, t) -> -(1 + exp(-x * x)) * (x^2.4 - x) * (2 * t)
+
+    # Auxiliary functions for manufactured sources
+    @inline ∂ₜₜu(x, y, t) = (x^2.4 - x) * (y^2.4 - 1) * 2
+    @inline Δu(x, y, t) = ((2.4 * 1.4 * x^0.4) * (y^2.4 - 1) +
+                           (x^2.4 - x) * (2.4 * 1.4 * y^0.4)) * (4 + t^2)
+    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^2.4 - x)
+
+    # Manufactured source terms
+    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - common.α(t) * Δu(x, y, t) + common.f(u(x, y, t))
+    f₂ = (x, t) -> common.q₁ * ∂ₜₜz(x, t) + common.q₂ * r(x, t) +
+                   common.q₃ * z(x, t) + common.q₄ * v(x, ymin, t)
+
+    return manufactured_solution_case(common, f₁, f₂, u, v, z, r)
+end
+
+"""
+    example2_zero_source([T=Float64]) -> PDEInputData{T}
+
+Example 2 with zero source terms for physical simulation.
+"""
+function example2_zero_source(::Type{T} = Float64) where {T}
+    common = example2_common_data(T)
+    return zero_source_case(common)
+end

@@ -11,6 +11,7 @@ using FixedSizeArrays: FixedSizeArray
 export PDECommonData, PDEInputData
 export manufactured_solution_case, zero_source_case
 export example1_manufactured, example1_zero_source
+export example2_manufactured, example2_zero_source
 export Lagrange, Hermite
 export pde_solve
 export convergence_test, print_convergence_table
