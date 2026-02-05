@@ -27,12 +27,69 @@ Named tuple containing L² errors at each time step:
 
 # Algorithm
 - Implements second-order accurate linearized Crank-Nicolson scheme. Nonlinear terms 
-`f(u)`, `g(x,v)` and the coupling term `q₄v` in the acoustic equation are linearized using values from 
-the previous time step(s).
-- **Boundary nonlinearity issue**: The algorithm currently fails when using the 
-  extrapolated velocity `v_ast_n` in the boundary nonlinear term `g(x,v)`. As a 
-  temporary workaround, enabling validation of the remaining algorithmic components, the exact manufactured solution is used for `g` evaluation.
-  **Investigation pending**.
+  `f(u)` and `g(x,v)`, along with the coupling term `q₄v` in the acoustic equation, 
+  are evaluated using values from previous time step(s) to decouple the system and 
+  avoid implicit nonlinear solves.
+- **Temporal refinement requirement**: Preliminary tests suggest the algorithm requires 
+  sufficiently refined time steps for stability. The necessary refinement may be related 
+  to the variation of the boundary nonlinearity `g`. Further investigation needed.
+- **Note on validation strategy**: During implementation validation, the exact solution 
+  was temporarily substituted for `v_ast_n` in the nonlinear term `g(x,v)`, which 
+  allowed verification of all other algorithmic components. The current implementation 
+  correctly uses the extrapolated velocity `v_ast_n` as specified in the algorithm. 
+  Convergence analysis with fixed, well-refined τ demonstrates correct behavior; issues 
+  observed in earlier tests with coupled refinement (h = τ) require further analysis.
+
+# Examples
+
+Spatial convergence with τ = 2⁻¹² (well-refined) demonstrates optimal second-order convergence:
+```julia
+julia> results = convergence_test_spatial(input_data=example1_manufactured(), solver=CrankNicolsonLinearized(), τ_fixed=2^(-12));
+julia> print_convergence_table(results)
+==============================================================================================================
+Spatial convergence (τ = 0.000244140625 fixed) with CrankNicolsonLinearized
+==============================================================================================================
+   Nx    log₂(h)  log₂(τ)   L∞L²_v     rate_v    L∞L²_d     rate_d    L∞L²_r     rate_r    L∞L²_z     rate_z
+--------------------------------------------------------------------------------------------------------------
+    8     -2.50   -12.00    4.68e-03    0.000    1.12e-02    0.000    1.50e-02    0.000    1.14e-02    0.000
+   16     -3.50   -12.00    1.18e-03    1.983    2.80e-03    2.005    3.61e-03    2.057    2.79e-03    2.036
+   32     -4.50   -12.00    2.97e-04    1.994    6.99e-04    2.002    8.88e-04    2.022    6.92e-04    2.012
+   64     -5.50   -12.00    7.44e-05    1.998    1.75e-04    2.001    2.21e-04    2.009    1.72e-04    2.004
+==============================================================================================================
+```
+
+Insufficient temporal refinement (τ = 2⁻¹⁰) leads to algorithm failure for `example1_manufactured()`:
+```julia
+julia> results = convergence_test_spatial(input_data=example1_manufactured(), solver=CrankNicolsonLinearized(), τ_fixed=2^(-10));
+julia> print_convergence_table(results)
+==============================================================================================================
+Spatial convergence (τ = 0.0009765625 fixed) with CrankNicolsonLinearized
+==============================================================================================================
+   Nx    log₂(h)  log₂(τ)   L∞L²_v     rate_v    L∞L²_d     rate_d    L∞L²_r     rate_r    L∞L²_z     rate_z
+--------------------------------------------------------------------------------------------------------------
+    8     -2.50   -10.00    4.68e-03    0.000    1.12e-02    0.000    1.50e-02    0.000    1.14e-02    0.000
+   16     -3.50   -10.00    1.18e-03    1.983    2.80e-03    2.005    3.61e-03    2.057    2.79e-03    2.036
+   32     -4.50   -10.00    6.73e-02   -5.830    2.15e-03    0.380    4.82e-03   -0.419    2.54e-03    0.138
+   64     -5.50   -10.00         NaN      NaN         NaN      NaN         NaN      NaN         NaN      NaN
+==============================================================================================================
+```
+
+However, the same temporal refinement (τ = 2⁻¹⁰) is sufficient for 
+`example2_manufactured()`, suggesting sensitivity to the specific form of `g`:
+```julia
+julia> results = convergence_test_spatial(input_data=example2_manufactured(), solver=CrankNicolsonLinearized(), τ_fixed=2^(-10));
+julia> print_convergence_table(results)
+==============================================================================================================
+Spatial convergence (τ = 0.0009765625 fixed) with CrankNicolsonLinearized
+==============================================================================================================
+   Nx    log₂(h)  log₂(τ)   L∞L²_v     rate_v    L∞L²_d     rate_d    L∞L²_r     rate_r    L∞L²_z     rate_z
+--------------------------------------------------------------------------------------------------------------
+    8     -2.50   -10.00    4.65e-03    0.000    1.21e-02    0.000    5.05e-03    0.000    6.54e-03    0.000
+   16     -3.50   -10.00    1.16e-03    2.000    3.02e-03    2.003    1.22e-03    2.047    1.61e-03    2.026
+   32     -4.50   -10.00    2.91e-04    1.999    7.55e-04    2.002    3.02e-04    2.018    4.00e-04    2.007
+   64     -5.50   -10.00    7.28e-05    1.999    1.88e-04    2.003    7.50e-05    2.008    9.97e-05    2.002
+==============================================================================================================
+```
 """
 function crank_nicolson_linearized(
         v⁰::AbstractVector{T},
@@ -119,13 +176,13 @@ function crank_nicolson_linearized(
 
     compute_rⁿ!(r¹, r⁰, z⁰, v_ast_n, vec_cst, M_m₂xm₂_factorized,
         input_data.f₂, t_half, mesh1D, dof_map_m₂, quad, cache)
-    ########################################################### It does not work when using $v^{\ast n}$ in the nonlinear term $g$.
-    v_ast_n_TEMP = zeros(T, m₂)
-    Δx = mesh1D.Δx[1]
-    @. v_ast_n_TEMP = input_data.v(Δx:Δx:(1 - Δx), 0.0, τ_2)
+    ########################################################### TEST
+    # v_ast_n_TEMP = zeros(T, m₂)
+    # Δx = mesh1D.Δx[1]
+    # @. v_ast_n_TEMP = input_data.v(Δx:Δx:(1 - Δx), 0.0, τ_2)
     ###########################################################
     compute_vⁿ!(v¹, v⁰, d⁰, r¹, r⁰,
-        v_ast_n_TEMP, d_ast_n,
+        v_ast_n, d_ast_n,
         input_data.common.α, input_data.common.g, input_data.common.f, input_data.f₁,
         t_half, τ, τ_4, τ²_4,
         mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices, A, cache)
@@ -164,11 +221,11 @@ function crank_nicolson_linearized(
 
         compute_rⁿ!(rⁿ, rⁿ⁻¹, zⁿ⁻¹, v_ast_n, vec_cst, M_m₂xm₂_factorized,
             input_data.f₂, t_half, mesh1D, dof_map_m₂, quad, cache)
-        ########################################################### It does not work when using $v^{\ast n}$ in the nonlinear term $g$.
-        @. v_ast_n_TEMP = input_data.v(Δx:Δx:(1 - Δx), 0.0, t_half)
+        ########################################################### TEST
+        # @. v_ast_n_TEMP = input_data.v(Δx:Δx:(1 - Δx), 0.0, t_half)
         ###########################################################
         compute_vⁿ!(vⁿ, vⁿ⁻¹, dⁿ⁻¹, rⁿ, rⁿ⁻¹,
-            v_ast_n_TEMP, d_ast_n,
+            v_ast_n, d_ast_n,
             input_data.common.α, input_data.common.g, input_data.common.f, input_data.f₁,
             t_half, τ, τ_4, τ²_4,
             mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices, A, cache)
