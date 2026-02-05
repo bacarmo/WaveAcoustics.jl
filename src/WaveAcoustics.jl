@@ -13,7 +13,8 @@ export manufactured_solution_case, zero_source_case
 export example1_manufactured, example1_zero_source
 export example2_manufactured, example2_zero_source
 export Lagrange, Hermite
-export pde_solve, CrankNicolson, CrankNicolsonLinearized
+export pde_solve, CrankNicolson, CrankNicolsonLinearized, ConvergenceStudy, SolutionHistory,
+       EnergyHistory
 export convergence_test_coupled, convergence_test_spatial, convergence_test_temporal,
        print_convergence_table
 
@@ -30,8 +31,8 @@ include("assembly_global_vectors.jl")
 include("pde_inputdata.jl")
 include("initial_solution.jl")
 include("error_norms.jl")
+include("pde_solve.jl")
 include("crank_nicolson.jl")
 include("crank_nicolson_linearized.jl")
-include("pde_solve.jl")
 include("convergence_test.jl")
 end

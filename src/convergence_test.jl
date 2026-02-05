@@ -68,7 +68,7 @@ function convergence_test_spatial(;
 end
 
 """
-    convergence_test_temporal(input_data; solver, τ_exp_range, Nx_fixed)
+    convergence_test_temporal(;input_data, solver, τ_exp_range, Nx_fixed)
 
 Perform temporal convergence test with fixed spatial grid.
 
@@ -158,12 +158,12 @@ function run_convergence_study(
         τ = τ_values[i]
 
         # Solve PDE with specified solver
-        err_v, err_d, err_r, err_z = pde_solve((Nx, Nx), τ, input_data, solver)
+        output_data = pde_solve((Nx, Nx), τ, input_data, solver, ConvergenceStudy())
 
-        errors.v[i] = err_v
-        errors.d[i] = err_d
-        errors.r[i] = err_r
-        errors.z[i] = err_z
+        errors.v[i] = maximum(output_data.v_errors)
+        errors.d[i] = maximum(output_data.d_errors)
+        errors.r[i] = maximum(output_data.r_errors)
+        errors.z[i] = maximum(output_data.z_errors)
 
         # Compute convergence rates (log₂ ratio)
         if i > 1

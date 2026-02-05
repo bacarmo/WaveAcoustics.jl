@@ -1,6 +1,6 @@
 """
     crank_nicolson_linearized(v⁰, d⁰, r⁰, z⁰, τ, input_data, mesh1D, mesh2D, 
-                              dof_map_m₁, dof_map_m₂, quad, matrices)
+                              dof_map_m₁, dof_map_m₂, quad, matrices, output)
 
 Solve coupled wave-acoustic PDE system using linearized Crank-Nicolson time integration.
 
@@ -17,13 +17,16 @@ Solve coupled wave-acoustic PDE system using linearized Crank-Nicolson time inte
 - `dof_map_m₂::DOFMap`: DOF mapping for 1D boundary space
 - `quad::QuadratureSetup`: Precomputed quadrature data
 - `matrices`: Preassembled global matrices
+- `output::OutputMode`: Output mode (default: `ConvergenceStudy()`)
+  - `ConvergenceStudy()` → `ConvergenceStudyData` with L² errors at each time step
+  - `SolutionHistory()` → `SolutionHistoryData` with displacement snapshots
+  - `EnergyHistory()` → `EnergyHistoryData` with energy evolution
 
 # Returns
-Named tuple containing L² errors at each time step:
-- `v`: Wave velocity errors in Ω
-- `d`: Wave displacement errors in Ω
-- `r`: Acoustic velocity errors on Γ₁
-- `z`: Acoustic displacement errors on Γ₁
+Depends on `output`:
+- `ConvergenceStudyData{T}`: Fields `v_errors`, `d_errors`, `r_errors`, `z_errors` (each a vector of length `nt`)
+- `SolutionHistoryData{T}`: Fields `d_history` (m₁×nt), `z_history` (m₂×nt), `times` (length `nt`)
+- `EnergyHistoryData{T}`: Fields `energy`, `times` (each length `nt`)
 
 # Algorithm
 - Implements second-order accurate linearized Crank-Nicolson scheme. Nonlinear terms 
@@ -103,7 +106,9 @@ function crank_nicolson_linearized(
         dof_map_m₁::DOFMap,
         dof_map_m₂::DOFMap,
         quad::QuadratureSetup,
-        matrices) where {T <: Real}
+        matrices,
+        output::O = ConvergenceStudy()
+) where {T <: Real, O <: OutputMode}
     m₁, m₂ = length(v⁰), length(r⁰)
     @assert m₁ == dof_map_m₁.m
     @assert m₂ == dof_map_m₂.m
@@ -112,20 +117,16 @@ function crank_nicolson_linearized(
     nt = length(times)
 
     # ========================================
-    # Compute L2 error for initial solutions
+    # Initialize output data (dispatch)
     # ========================================
-    L2_error = (
-        v = zeros(T, nt),
-        d = zeros(T, nt),
-        r = zeros(T, nt),
-        z = zeros(T, nt)
-    )
+    output_data = initialize_output(output, m₁, m₂, times)
 
-    L2_error.v[1] = L2_error_2d(input_data.common.v₀, v⁰, mesh2D, dof_map_m₁, quad)
-    L2_error.d[1] = L2_error_2d(input_data.common.u₀, d⁰, mesh2D, dof_map_m₁, quad)
-
-    L2_error.r[1] = L2_error_1d(input_data.common.r₀, r⁰, mesh1D, dof_map_m₂, quad)
-    L2_error.z[1] = L2_error_1d(input_data.common.z₀, z⁰, mesh1D, dof_map_m₂, quad)
+    # ========================================
+    # Process solution at t₀ (dispatch)
+    # ========================================
+    process_solution!(
+        output_data, output, 0, times[1], v⁰, d⁰, r⁰, z⁰,
+        mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, input_data)
 
     # ========================================
     # Precompute constants
@@ -191,13 +192,10 @@ function crank_nicolson_linearized(
     d¹ = τ_2 * (v¹ + v⁰) + d⁰
     z¹ = τ_2 * (r¹ + r⁰) + z⁰
 
-    L2_error.v[2] = L2_error_2d(
-        (x, y) -> input_data.v(x, y, τ), v¹, mesh2D, dof_map_m₁, quad)
-    L2_error.d[2] = L2_error_2d(
-        (x, y) -> input_data.u(x, y, τ), d¹, mesh2D, dof_map_m₁, quad)
-
-    L2_error.r[2] = L2_error_1d(x -> input_data.r(x, τ), r¹, mesh1D, dof_map_m₂, quad)
-    L2_error.z[2] = L2_error_1d(x -> input_data.z(x, τ), z¹, mesh1D, dof_map_m₂, quad)
+    # Process solution at t₁ (dispatch)
+    process_solution!(
+        output_data, output, 1, times[2], v¹, d¹, r¹, z¹,
+        mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, input_data)
 
     # ========================================
     # Main Time-Stepping Loop (n ≥ 2)
@@ -233,17 +231,10 @@ function crank_nicolson_linearized(
         @. dⁿ = τ_2 * (vⁿ + vⁿ⁻¹) + dⁿ⁻¹
         @. zⁿ = τ_2 * (rⁿ + rⁿ⁻¹) + zⁿ⁻¹
 
-        # Compute L² errors at current time
-        tₙ = times[n + 1]
-        L2_error.v[n + 1] = L2_error_2d(
-            (x, y) -> input_data.v(x, y, tₙ), vⁿ, mesh2D, dof_map_m₁, quad)
-        L2_error.d[n + 1] = L2_error_2d(
-            (x, y) -> input_data.u(x, y, tₙ), dⁿ, mesh2D, dof_map_m₁, quad)
-
-        L2_error.r[n + 1] = L2_error_1d(
-            x -> input_data.r(x, tₙ), rⁿ, mesh1D, dof_map_m₂, quad)
-        L2_error.z[n + 1] = L2_error_1d(
-            x -> input_data.z(x, tₙ), zⁿ, mesh1D, dof_map_m₂, quad)
+        # Process solution at tₙ (dispatch)
+        process_solution!(
+            output_data, output, n, times[n + 1], vⁿ, dⁿ, rⁿ, zⁿ,
+            mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, input_data)
 
         # Rotate array references (no allocation)
         vⁿ⁻², vⁿ⁻¹, vⁿ = vⁿ⁻¹, vⁿ, vⁿ⁻²
@@ -252,7 +243,7 @@ function crank_nicolson_linearized(
         zⁿ⁻¹, zⁿ = zⁿ, zⁿ⁻¹
     end
 
-    return L2_error
+    return output_data
 end
 
 # ============================================
