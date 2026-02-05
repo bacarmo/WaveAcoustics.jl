@@ -1,3 +1,14 @@
+# ========================================
+# Type definitions
+# ========================================
+abstract type ODESolver end
+
+struct CrankNicolson <: ODESolver end
+struct CrankNicolsonLinearized <: ODESolver end
+
+# ========================================
+# Main solver function
+# ========================================
 """
     pde_solve(Nx, τ, input_data)
 
@@ -7,6 +18,7 @@ Solve coupled wave-acoustic PDE system and compute L∞(0,T;L²) errors.
 - `Nx::NTuple{2,Integer}`: Number of elements per direction
 - `τ::Real`: Time step size
 - `input_data::PDEInputData`: Problem configuration with manufactured solution 
+- `solver::ODESolver`: Time integration scheme (default: `CrankNicolson()`)
 
 ## Returns
 - `(LooL2_v, LooL2_u, LooL2_r, LooL2_z)`: L∞(0,T;L²) errors
@@ -14,7 +26,8 @@ Solve coupled wave-acoustic PDE system and compute L∞(0,T;L²) errors.
 function pde_solve(
         Nx::NTuple{2, I},
         τ::T,
-        input_data
+        input_data,
+        solver::ODESolver = CrankNicolson()
 ) where {I <: Integer, T <: Real}
     # ========================================
     # Spatial discretization
@@ -81,11 +94,43 @@ function pde_solve(
     compute_r⁰_z⁰!(r⁰, z⁰, M_m₂xm₂, input_data, mesh1D, dof_map_m₂, quad)
 
     # ========================================
-    # Compute vⁿ, dⁿ, rⁿ, and zⁿ
+    # Compute vⁿ, dⁿ, rⁿ, and zⁿ for n ≥ 1
     # ========================================
-    L2_error = crank_nicolson(
-        v⁰, d⁰, r⁰, z⁰, τ, input_data, mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
+    L2_error = solve_ode(
+        solver, v⁰, d⁰, r⁰, z⁰, τ, input_data, mesh1D, mesh2D,
+        dof_map_m₁, dof_map_m₂, quad, matrices)
 
     return (
         maximum(L2_error.v), maximum(L2_error.d), maximum(L2_error.r), maximum(L2_error.z))
+end
+
+# ========================================
+# ODE solver dispatch methods
+# ========================================
+"""
+    solve_ode(::CrankNicolson, v⁰, d⁰, r⁰, z⁰, τ, ...)
+
+Crank-Nicolson time integration for the semi-discrete system.
+"""
+function solve_ode(
+        ::CrankNicolson,
+        v⁰, d⁰, r⁰, z⁰, τ, input_data,
+        mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
+    return crank_nicolson(
+        v⁰, d⁰, r⁰, z⁰, τ, input_data,
+        mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
+end
+
+"""
+    solve_ode(::CrankNicolsonLinearized, v⁰, d⁰, r⁰, z⁰, τ, ...)
+
+Linearized Crank-Nicolson time integration for the semi-discrete system.
+"""
+function solve_ode(
+        ::CrankNicolsonLinearized,
+        v⁰, d⁰, r⁰, z⁰, τ, input_data,
+        mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
+    return crank_nicolson_linearized(
+        v⁰, d⁰, r⁰, z⁰, τ, input_data,
+        mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices)
 end
