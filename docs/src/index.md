@@ -8,27 +8,14 @@ Welcome to WaveAcoustics.jl documentation!
 
 ## Overview
 
-This package provides finite element methods for solving acoustic wave equations...
+This package provides numerical solutions to a wave acoustics PDE systems using the finite element method for spatial discretization and finite difference methods for temporal discretization. 
 
-[Model description and main equation here - brief overview]
+This package is under active development as a learning project in Julia.
 
-## Quick Start
-```julia
-using WaveAcoustics
-
-mesh = CartesianMesh((0.0,), (1.0,), (10,))
-```
-
-## Features
-
-- Multiple FE families (Lagrange, Hermite)
-- 1D and 2D domains
-- Various boundary conditions
-- ...
 
 ## Contents
 ```@contents
-Pages = ["theory/model.md", "methods/overview.md", "examples/overview.md", "api/api.md"]
+Pages = ["theory/model.md", "methods/method1.md","methods/method2.md", "examples/example1.md","examples/example2.md", "api/api.md"]
 Depth = 2
 ```
 

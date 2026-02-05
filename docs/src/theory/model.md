@@ -1,3 +1,4 @@
+# Model
 ## Strong Formulation
 We seek functions ``u`` and ``z`` satisfying the following system of equations:
 ```math

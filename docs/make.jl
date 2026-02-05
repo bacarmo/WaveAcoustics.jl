@@ -21,7 +21,6 @@ makedocs(;
             "methods/method2.md"
         ],
         "Examples" => [
-            "Overview" => "examples/overview.md",
             "Example 1" => "examples/example1.md",
             "Example 2" => "examples/example2.md"
         ],
