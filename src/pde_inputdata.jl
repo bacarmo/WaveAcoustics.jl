@@ -1,7 +1,7 @@
 """
-    PDECommonData{T<:Real, Fα, Ff, Fdf, Fg, F∂ₛg, Fu₀, F∂ₓu₀, F∂ᵧu₀, Fv₀, F∂ₓv₀, F∂ᵧv₀, Fz₀, Fr₀}
+    PDEInputData{Fα, Ff, Fdf, Fg, F∂ₛg, Fu₀, F∂ₓu₀, F∂ᵧu₀, Fv₀, F∂ₓv₀, F∂ᵧv₀, Fz₀, Fr₀}
 
-Common configuration for coupled wave-acoustic PDE system.
+Input data configuration for coupled wave-acoustic PDE system.
 
 ## Mathematical Specification
 
@@ -22,15 +22,15 @@ where v = ∂u/∂t couples the wave velocity at Γ₁ to the acoustic equation.
 ## Fields
 
 ### Domain Configuration
-- `pmin::NTuple{2,T}`: Bottom-left corner (xmin, ymin). Default: `(0, 0)`
-- `pmax::NTuple{2,T}`: Top-right corner (xmax, ymax). Default: `(1, 1)`
-- `t_final::T`: Final simulation time. Default: `1`
+- `pmin::NTuple{2,Float64}`: Bottom-left corner (xmin, ymin). Default: `(0.0, 0.0)`
+- `pmax::NTuple{2,Float64}`: Top-right corner (xmax, ymax). Default: `(1.0, 1.0)`
+- `t_final::Float64`: Final simulation time. Default: `1.0`
 
 ### Physical Parameters
-- `q₁::T`: Acoustic acceleration coefficient. Default: `1`
-- `q₂::T`: Acoustic velocity coefficient. Default: `1`
-- `q₃::T`: Acoustic displacement coefficient. Default: `1`
-- `q₄::T`: Wave-acoustic coupling strength. Default: `1`
+- `q₁::Float64`: Acoustic acceleration coefficient. Default: `1.0`
+- `q₂::Float64`: Acoustic velocity coefficient. Default: `1.0`
+- `q₃::Float64`: Acoustic displacement coefficient. Default: `1.0`
+- `q₄::Float64`: Wave-acoustic coupling strength. Default: `1.0`
 
 ### Coefficient Functions
 - `α::Fα`: Time-dependent wave diffusion coefficient α(t)
@@ -44,20 +44,33 @@ where v = ∂u/∂t couples the wave velocity at Γ₁ to the acoustic equation.
 ### Acoustic Initial Conditions (1D functions on Γ₁)
 - `z₀::Fz₀`: Acoustic displacement z(x,0)
 - `r₀::Fr₀`: Acoustic velocity r(x,0) = ∂ₜz(x,0)
+
+### Source Terms
+- `f₁::Ff₁`: Wave source term f₁(x,y,t) on Ω
+- `f₂::Ff₂`: Acoustic source term f₂(x,t) on Γ₁
+
+### Analytical Solutions
+For manufactured solution cases, provide analytical solutions for convergence studies:
+- `u::Fu`, `v::Fv`: Analytical wave solutions u(x,y,t), v(x,y,t)
+- `z::Fz`, `r::Fr`: Analytical acoustic solutions z(x,t), r(x,t)
+
+For physical simulations without known solutions, these should return `nothing`.
 """
-Base.@kwdef struct PDECommonData{T <: Real, Fα, Ff, Fdf, Fg, F∂ₛg,
+Base.@kwdef struct PDEInputData{
+    Fα, Ff, Fdf, Fg, F∂ₛg,
     Fu₀, F∂ₓu₀, F∂ᵧu₀, Fv₀, F∂ₓv₀, F∂ᵧv₀,
-    Fz₀, Fr₀}
+    Fz₀, Fr₀,
+    Ff₁, Ff₂, Fu, Fv, Fz, Fr}
     # Domain 
-    pmin::NTuple{2, T} = (zero(T), zero(T))
-    pmax::NTuple{2, T} = (one(T), one(T))
-    t_final::T = one(T)
+    pmin::NTuple{2, Float64} = (0.0, 0.0)
+    pmax::NTuple{2, Float64} = (1.0, 1.0)
+    t_final::Float64 = 1.0
 
     # Constants
-    q₁::T = one(T)
-    q₂::T = one(T)
-    q₃::T = one(T)
-    q₄::T = one(T)
+    q₁::Float64 = 1.0
+    q₂::Float64 = 1.0
+    q₃::Float64 = 1.0
+    q₄::Float64 = 1.0
 
     # Functions
     α::Fα
@@ -77,22 +90,8 @@ Base.@kwdef struct PDECommonData{T <: Real, Fα, Ff, Fdf, Fg, F∂ₛg,
     # Acoustic initial conditions
     z₀::Fz₀
     r₀::Fr₀
-end
 
-"""
-    PDEInputData{C<:PDECommonData, Ff₁, Ff₂, Fu, Fv, Fz, Fr}
-
-Complete problem specification including source terms and analytical solutions.
-
-## Fields
-- `common::C`: Problem configuration (see [`PDECommonData`](@ref))
-- `f₁::Ff₁`: Wave source term f₁(x,y,t) on Ω
-- `f₂::Ff₂`: Acoustic source term f₂(x,t) on Γ₁
-- `u::Fu`, `v::Fv`: Analytical wave solutions u(x,y,t), v(x,y,t) (if known)
-- `z::Fz`, `r::Fr`: Analytical acoustic solutions z(x,t), r(x,t) (if known)
-"""
-Base.@kwdef struct PDEInputData{C <: PDECommonData, Ff₁, Ff₂, Fu, Fv, Fz, Fr}
-    common::C
+    # Source terms and analytical solutions
     f₁::Ff₁
     f₂::Ff₂
     u::Fu
@@ -101,209 +100,243 @@ Base.@kwdef struct PDEInputData{C <: PDECommonData, Ff₁, Ff₂, Fu, Fv, Fz, Fr
     r::Fr
 end
 
-"""
-    manufactured_solution_case(common, f₁, f₂, u, v, z, r) -> PDEInputData
-
-Construct problem with manufactured solutions for convergence study.
-
-Source terms `f₁` and `f₂` are computed by substituting analytical solutions
-into the governing PDEs (Method of Manufactured Solutions).
-
-## Arguments
-- `common::PDECommonData`: Problem configuration
-- `f₁`: Manufactured wave source f₁(x,y,t)
-- `f₂`: Manufactured acoustic source f₂(x,t)
-- `u`, `v`: Analytical wave solutions u(x,y,t), v(x,y,t)
-- `z`, `r`: Analytical acoustic solutions z(x,t), r(x,t)
-
-## See also
-[`zero_source_case`](@ref)
-"""
-function manufactured_solution_case(common::PDECommonData{T}, f₁, f₂, u, v, z, r) where {T}
-    return PDEInputData(
-        common = common,
-        f₁ = f₁,
-        f₂ = f₂,
-        u = u,
-        v = v,
-        z = z,
-        r = r
-    )
-end
-
-"""
-    zero_source_case(common) -> PDEInputData
-
-Construct problem with zero source terms (f₁ = f₂ = 0).
-
-No analytical solution available. Dummy functions returning `nothing` are used
-for analytical solution fields.
-
-## See also
-[`manufactured_solution_case`](@ref)
-"""
-function zero_source_case(common::PDECommonData{T}) where {T}
-    zero_f₁ = (x, y, t) -> zero(T)
-    zero_f₂ = (x, t) -> zero(T)
-    dummy_2d = (x, y, t) -> nothing
-    dummy_1d = (x, t) -> nothing
-
-    return PDEInputData(
-        common = common,
-        f₁ = zero_f₁,
-        f₂ = zero_f₂,
-        u = dummy_2d,
-        v = dummy_2d,
-        z = dummy_1d,
-        r = dummy_1d
-    )
-end
-
 # ============================================================================
 # Example 1
 # ============================================================================
-
 """
-    example1_common_data([T=Float64]) -> PDECommonData{T}
+    example1_manufactured(a::Float64=2.4) -> PDEInputData
 
-Ω = ]0,1[², f(s) = s|s|³, g(x,s) = (1+exp(-x²))(sin(s)+2s), u₀(x,y) = (x^2.4 - x) * (y^2.4 - 1) * 4, z₀(x) = sinpi(x).
+Example 1 with manufactured solutions for convergence study.
+
+# Arguments
+- `a::Float64=2.4`: Exponent for function u(x,y,t) = (xᵃ-x)(yᵃ-1)(4+t²)
 """
-function example1_common_data(::Type{T} = Float64) where {T}
-    return PDECommonData(
-        pmin = (zero(T), zero(T)),
-        pmax = (one(T), one(T)),
-        t_final = one(T),
-        q₁ = T(1),
-        q₂ = T(1),
-        q₃ = T(1),
-        q₄ = T(1),
-        α = t -> one(T) + exp(-t),
-        f = s -> s * abs(s)^3,
-        df = s -> 4 * abs(s)^3,
-        g = (x, s) -> (1 + exp(-x * x)) * (sin(s) + 2 * s),
-        ∂ₛg = (x, s) -> (1 + exp(-x * x)) * (cos(s) + 2),
-        u₀ = (x, y) -> (x^2.4 - x) * (y^2.4 - 1) * 4,
-        ∂ₓu₀ = (x, y) -> (2.4 * x^1.4 - 1) * (y^2.4 - 1) * 4,
-        ∂ᵧu₀ = (x, y) -> (x^2.4 - x) * (2.4 * y^1.4) * 4,
-        v₀ = (x, y) -> zero(T),
-        ∂ₓv₀ = (x, y) -> zero(T),
-        ∂ᵧv₀ = (x, y) -> zero(T),
-        z₀ = x -> sinpi(x),
-        r₀ = x -> zero(T)
+function example1_manufactured(a::Float64 = 2.4)
+    # Constants
+    a_minus_1 = a - 1.0
+    a_minus_2 = a - 2.0
+    axa_minus_1 = a * a_minus_1
+    q₁ = q₂ = q₃ = q₄ = 1.0
+    ymin = 0.0
+
+    # Coefficient functions
+    α = t -> 1.0 + exp(-t)
+    f = s -> s * abs(s)^3
+    df = s -> 4 * abs(s)^3
+    g = (x, s) -> (1 + exp(-x^2)) * (sin(s) + 2s)
+    ∂ₛg = (x, s) -> (1 + exp(-x^2)) * (cos(s) + 2)
+
+    # Analytical solutions
+    u = (x, y, t) -> (x^a - x) * (y^a - 1) * (4 + t^2)
+    v = (x, y, t) -> (x^a - x) * (y^a - 1) * (2 * t)
+    z = (x, t) -> sinpi(x) +
+                  (1 + exp(-x^2)) *
+                  ((cos(-(x^a - x) * (2 * t)) - 1) / (2 * (x^a - x)) -
+                   (x^a - x) * (2 * t^2))
+    r = (x, t) -> (1 + exp(-x^2)) * (sin(-(x^a - x) * (2 * t)) - (x^a - x) * (4 * t))
+
+    # Auxiliary functions for manufactured sources
+    @inline ∂ₜₜu(x, y, t) = (x^a - x) * (y^a - 1) * 2
+    @inline Δu(x, y, t) = ((axa_minus_1 * x^a_minus_2) * (y^a - 1) +
+                           (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4 + t^2)
+    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^a - x) * (2 + cos(2 * t * (x^a - x)))
+
+    # Manufactured source terms
+    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
+    f₂ = (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) + q₄ * v(x, ymin, t)
+
+    # Initial conditions
+    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
+    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
+    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
+    v₀ = (x, y) -> 0.0
+    ∂ₓv₀ = (x, y) -> 0.0
+    ∂ᵧv₀ = (x, y) -> 0.0
+    z₀ = x -> sinpi(x)
+    r₀ = x -> 0.0
+
+    return PDEInputData(;
+        pmin = (0.0, ymin),
+        pmax = (1.0, 1.0),
+        t_final = 1.0,
+        q₁, q₂, q₃, q₄,
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u, v, z, r
     )
 end
 
 """
-    example1_manufactured([T=Float64]) -> PDEInputData{T}
-
-Example 1 with manufactured solutions for convergence study.
-"""
-function example1_manufactured(::Type{T} = Float64) where {T}
-    common = example1_common_data(T)
-    ymin = common.pmin[2]
-
-    # Analytical solutions
-    u = (x, y, t) -> (x^2.4 - x) * (y^2.4 - 1) * (4 + t^2)
-    v = (x, y, t) -> (x^2.4 - x) * (y^2.4 - 1) * (2 * t)
-    z = (x, t) -> sinpi(x) +
-                  (1 + exp(-x^2)) *
-                  ((cos(-(x^2.4 - x) * (2 * t)) - 1) / (2 * (x^2.4 - x)) -
-                   (x^2.4 - x) * (2 * t^2))
-    r = (x, t) -> (1 + exp(-x^2)) * (sin(-(x^2.4 - x) * (2 * t)) - (x^2.4 - x) * (4 * t))
-
-    # Auxiliary functions for manufactured sources
-    @inline ∂ₜₜu(x, y, t) = (x^2.4 - x) * (y^2.4 - 1) * 2
-    @inline Δu(x, y, t) = ((2.4 * 1.4 * x^0.4) * (y^2.4 - 1) +
-                           (x^2.4 - x) * (2.4 * 1.4 * y^0.4)) * (4 + t^2)
-    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^2.4 - x) * (2 + cos(2 * t * (x^2.4 - x)))
-
-    # Manufactured source terms
-    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - common.α(t) * Δu(x, y, t) + common.f(u(x, y, t))
-    f₂ = (x, t) -> common.q₁ * ∂ₜₜz(x, t) + common.q₂ * r(x, t) +
-                   common.q₃ * z(x, t) + common.q₄ * v(x, ymin, t)
-
-    return manufactured_solution_case(common, f₁, f₂, u, v, z, r)
-end
-
-"""
-    example1_zero_source([T=Float64]) -> PDEInputData{T}
+    example1_zero_source(a::Float64=2.4) -> PDEInputData
 
 Example 1 with zero source terms for physical simulation.
+No analytical solution available.
+
+# Arguments
+- `a::Float64=2.4`: Exponent for function u₀(x,y) = 4(xᵃ-x)(yᵃ-1)
 """
-function example1_zero_source(::Type{T} = Float64) where {T}
-    common = example1_common_data(T)
-    return zero_source_case(common)
+function example1_zero_source(a::Float64 = 2.4)
+    # Constants
+    a_minus_1 = a - 1.0
+    q₁ = q₂ = q₃ = q₄ = 1.0
+    ymin = 0.0
+
+    # Coefficient functions
+    α = t -> 1.0 + exp(-t)
+    f = s -> s * abs(s)^3
+    df = s -> 4 * abs(s)^3
+    g = (x, s) -> (1 + exp(-x^2)) * (sin(s) + 2s)
+    ∂ₛg = (x, s) -> (1 + exp(-x^2)) * (cos(s) + 2)
+
+    # Zero source terms
+    f₁ = (x, y, t) -> 0.0
+    f₂ = (x, t) -> 0.0
+
+    # Initial conditions
+    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
+    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
+    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
+    v₀ = (x, y) -> 0.0
+    ∂ₓv₀ = (x, y) -> 0.0
+    ∂ᵧv₀ = (x, y) -> 0.0
+    z₀ = x -> sinpi(x)
+    r₀ = x -> 0.0
+
+    return PDEInputData(;
+        pmin = (0.0, ymin),
+        pmax = (1.0, 1.0),
+        t_final = 1.0,
+        q₁, q₂, q₃, q₄,
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u = nothing,
+        v = nothing,
+        z = nothing,
+        r = nothing
+    )
 end
 
 # ============================================================================
 # Example 2
 # ============================================================================
-
 """
-    example2_common_data([T=Float64]) -> PDECommonData{T}
+    example2_manufactured(a::Float64=2.4) -> PDEInputData
 
-Ω = ]0,1[², f(s) = 0, g(x,s) = (1+exp(-x²))s, u₀(x,y) = (x^2.4 - x) * (y^2.4 - 1) * 4, z₀(x) = sinpi(x).
+Example 2 with manufactured solutions for convergence study.
+
+# Arguments
+- `a::Float64=2.4`: Exponent for function u(x,y,t) = (xᵃ-x)(yᵃ-1)(4+t²)
 """
-function example2_common_data(::Type{T} = Float64) where {T}
-    return PDECommonData(
-        pmin = (zero(T), zero(T)),
-        pmax = (one(T), one(T)),
-        t_final = one(T),
-        q₁ = T(1),
-        q₂ = T(1),
-        q₃ = T(1),
-        q₄ = T(1),
-        α = t -> one(T) + exp(-t),
-        f = s -> zero(T),
-        df = s -> zero(T),
-        g = (x, s) -> (1 + exp(-x * x)) * s,
-        ∂ₛg = (x, s) -> (1 + exp(-x * x)),
-        u₀ = (x, y) -> (x^2.4 - x) * (y^2.4 - 1) * 4,
-        ∂ₓu₀ = (x, y) -> (2.4 * x^1.4 - 1) * (y^2.4 - 1) * 4,
-        ∂ᵧu₀ = (x, y) -> (x^2.4 - x) * (2.4 * y^1.4) * 4,
-        v₀ = (x, y) -> zero(T),
-        ∂ₓv₀ = (x, y) -> zero(T),
-        ∂ᵧv₀ = (x, y) -> zero(T),
-        z₀ = x -> sinpi(x),
-        r₀ = x -> zero(T)
+function example2_manufactured(a::Float64 = 2.4)
+    # Constants
+    a_minus_1 = a - 1.0
+    a_minus_2 = a - 2.0
+    axa_minus_1 = a * a_minus_1
+    q₁ = q₂ = q₃ = q₄ = 1.0
+    ymin = 0.0
+
+    # Coefficient functions
+    α = t -> 1.0 + exp(-t)
+    f = s -> s * abs(s)^3
+    df = s -> 4 * abs(s)^3
+    g = (x, s) -> (1 + exp(-x * x)) * s
+    ∂ₛg = (x, s) -> (1 + exp(-x * x))
+
+    # Analytical solutions
+    u = (x, y, t) -> (x^a - x) * (y^a - 1) * (4 + t^2)
+    v = (x, y, t) -> (x^a - x) * (y^a - 1) * (2 * t)
+    z = (x, t) -> sinpi(x) - (1 + exp(-x * x)) * (x^a - x) * t^2
+    r = (x, t) -> -(1 + exp(-x * x)) * (x^a - x) * (2 * t)
+
+    # Auxiliary functions for manufactured sources
+    @inline ∂ₜₜu(x, y, t) = (x^a - x) * (y^a - 1) * 2
+    @inline Δu(x, y, t) = ((axa_minus_1 * x^a_minus_2) * (y^a - 1) +
+                           (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4 + t^2)
+    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^a - x)
+
+    # Manufactured source terms
+    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
+    f₂ = (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) + q₄ * v(x, ymin, t)
+
+    # Initial conditions
+    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
+    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
+    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
+    v₀ = (x, y) -> 0.0
+    ∂ₓv₀ = (x, y) -> 0.0
+    ∂ᵧv₀ = (x, y) -> 0.0
+    z₀ = x -> sinpi(x)
+    r₀ = x -> 0.0
+
+    return PDEInputData(;
+        pmin = (0.0, ymin),
+        pmax = (1.0, 1.0),
+        t_final = 1.0,
+        q₁, q₂, q₃, q₄,
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u, v, z, r
     )
 end
 
 """
-    example2_manufactured([T=Float64]) -> PDEInputData{T}
-
-Example 2 with manufactured solutions for convergence study.
-"""
-function example2_manufactured(::Type{T} = Float64) where {T}
-    common = example2_common_data(T)
-    ymin = common.pmin[2]
-
-    # Analytical solutions
-    u = (x, y, t) -> (x^2.4 - x) * (y^2.4 - 1) * (4 + t^2)
-    v = (x, y, t) -> (x^2.4 - x) * (y^2.4 - 1) * (2 * t)
-    z = (x, t) -> sinpi(x) - (1 + exp(-x * x)) * (x^2.4 - x) * t^2
-    r = (x, t) -> -(1 + exp(-x * x)) * (x^2.4 - x) * (2 * t)
-
-    # Auxiliary functions for manufactured sources
-    @inline ∂ₜₜu(x, y, t) = (x^2.4 - x) * (y^2.4 - 1) * 2
-    @inline Δu(x, y, t) = ((2.4 * 1.4 * x^0.4) * (y^2.4 - 1) +
-                           (x^2.4 - x) * (2.4 * 1.4 * y^0.4)) * (4 + t^2)
-    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^2.4 - x)
-
-    # Manufactured source terms
-    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - common.α(t) * Δu(x, y, t) + common.f(u(x, y, t))
-    f₂ = (x, t) -> common.q₁ * ∂ₜₜz(x, t) + common.q₂ * r(x, t) +
-                   common.q₃ * z(x, t) + common.q₄ * v(x, ymin, t)
-
-    return manufactured_solution_case(common, f₁, f₂, u, v, z, r)
-end
-
-"""
-    example2_zero_source([T=Float64]) -> PDEInputData{T}
+    example2_zero_source(a::Float64=2.4) -> PDEInputData
 
 Example 2 with zero source terms for physical simulation.
+No analytical solution available.
+
+# Arguments
+- `a::Float64=2.4`: Exponent for function u₀(x,y) = 4(xᵃ-x)(yᵃ-1)
 """
-function example2_zero_source(::Type{T} = Float64) where {T}
-    common = example2_common_data(T)
-    return zero_source_case(common)
+function example2_zero_source(a::Float64 = 2.4)
+    # Constants
+    a_minus_1 = a - 1.0
+    q₁ = q₂ = q₃ = q₄ = 1.0
+    ymin = 0.0
+
+    # Coefficient functions
+    α = t -> 1.0 + exp(-t)
+    f = s -> s * abs(s)^3
+    df = s -> 4 * abs(s)^3
+    g = (x, s) -> (1 + exp(-x * x)) * s
+    ∂ₛg = (x, s) -> (1 + exp(-x * x))
+
+    # Zero source terms
+    f₁ = (x, y, t) -> 0.0
+    f₂ = (x, t) -> 0.0
+
+    # Initial conditions
+    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
+    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
+    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
+    v₀ = (x, y) -> 0.0
+    ∂ₓv₀ = (x, y) -> 0.0
+    ∂ᵧv₀ = (x, y) -> 0.0
+    z₀ = x -> sinpi(x)
+    r₀ = x -> 0.0
+
+    return PDEInputData(;
+        pmin = (0.0, ymin),
+        pmax = (1.0, 1.0),
+        t_final = 1.0,
+        q₁, q₂, q₃, q₄,
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u = nothing,
+        v = nothing,
+        z = nothing,
+        r = nothing
+    )
 end

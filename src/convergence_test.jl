@@ -10,7 +10,7 @@ Varies spatial and temporal discretization together, assuming linear basis funct
 Convergence rates are computed as log₂(error_{i-1} / error_i) between successive refinements.
 
 # Keyword Arguments
-- `input_data`: PDE input data (default: `example1_common_data()`)
+- `input_data`: PDE input data (default: `example1_manufactured()`)
 - `solver::ODESolver`: Time integration method (default: `CrankNicolson()`)
 - `Nx_exp_range`: Grid refinement exponents (default: 3:6 → Nx = 8, 16, 32, 64)
 
@@ -23,7 +23,7 @@ function convergence_test_coupled(;
         Nx_exp_range = 3:6)
     Nx_values = [2^i for i in Nx_exp_range]
     h_values = [compute_element_diameter(
-                    Nx, input_data.common.pmin, input_data.common.pmax)
+                    Nx, input_data.pmin, input_data.pmax)
                 for Nx in Nx_values]
     τ_values = h_values
 
@@ -42,7 +42,7 @@ Varies mesh size h while keeping temporal discretization τ constant to isolate
 spatial discretization error.
 
 # Keyword Arguments
-- `input_data`: PDE input data (default: `example1_common_data()`)
+- `input_data`: PDE input data (default: `example1_manufactured()`)
 - `solver::ODESolver`: Time integration method (default: `CrankNicolson()`)
 - `Nx_exp_range`: Grid refinement exponents (default: 3:6)
 - `τ_fixed::Real`: Fixed time step (default: 2^(-7))
@@ -57,7 +57,7 @@ function convergence_test_spatial(;
         τ_fixed::Real = 2^(-7))
     Nx_values = [2^i for i in Nx_exp_range]
     h_values = [compute_element_diameter(
-                    Nx, input_data.common.pmin, input_data.common.pmax)
+                    Nx, input_data.pmin, input_data.pmax)
                 for Nx in Nx_values]
     τ_values = fill(τ_fixed, length(Nx_values))
 
@@ -76,7 +76,7 @@ Varies time step τ while keeping mesh size h constant to isolate temporal
 discretization error.
 
 # Keyword Arguments
-- `input_data`: PDE input data (default: `example1_common_data()`)
+- `input_data`: PDE input data (default: `example1_manufactured()`)
 - `solver::ODESolver`: Time integration method (default: `CrankNicolson()`)
 - `τ_exp_range`: Time step refinement exponents (default: 3:6 → τ = 2^(-3), ..., 2^(-6))
 - `Nx_fixed::Int`: Fixed grid size per dimension (default: 2^8)
@@ -94,7 +94,7 @@ function convergence_test_temporal(;
 
     Nx_values = fill(Nx_fixed, n_refinements)
     h_fixed = compute_element_diameter(
-        Nx_fixed, input_data.common.pmin, input_data.common.pmax)
+        Nx_fixed, input_data.pmin, input_data.pmax)
     h_values = fill(h_fixed, n_refinements)
 
     test_info = "Temporal convergence (Nx = $Nx_fixed, h ≈ $(round(h_fixed; sigdigits=4)) fixed) with $(typeof(solver).name.name)"

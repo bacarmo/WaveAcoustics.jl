@@ -51,7 +51,7 @@ function crank_nicolson(
     @assert m₁ == dof_map_m₁.m
     @assert m₂ == dof_map_m₂.m
 
-    times = range(zero(T), input_data.common.t_final; step = τ)
+    times = range(zero(T), input_data.t_final; step = τ)
     nt = length(times)
 
     # ========================================
@@ -68,8 +68,8 @@ function crank_nicolson(
     # ========================================
     # Precompute constants
     # ========================================
-    q₁, q₂, q₃, q₄ = input_data.common.q₁, input_data.common.q₂, input_data.common.q₃,
-    input_data.common.q₄
+    q₁, q₂, q₃, q₄ = input_data.q₁, input_data.q₂, input_data.q₃,
+    input_data.q₄
 
     τ_2 = τ / 2
     τ_4 = τ / 4
@@ -123,7 +123,7 @@ function crank_nicolson(
     for n in 1:(nt - 1)
         # Compute time at half-step
         t_half = (n - 0.5) * τ
-        α_half = input_data.common.α(t_half)
+        α_half = input_data.α(t_half)
         τα_2 = τ_2 * α_half
 
         # Compute dⁿ⁻¹ + (τ/4)vⁿ⁻¹
@@ -410,11 +410,11 @@ function compute_minusHX!(
 
     # Compute τα(tₙ₊₁/₂)⋅G(v̂ⁿ_m₂) → cache.vec₂m₂
     assembly_nonlinearity_G!(
-        cache.vec₂m₂, τα, input_data.common.g, v̂ⁿ_m₂, mesh1D, dof_map_m₂, quad)
+        cache.vec₂m₂, τα, input_data.g, v̂ⁿ_m₂, mesh1D, dof_map_m₂, quad)
 
     # Compute τ⋅F(d̂ⁿ) → cache.vec₂m₁
     assembly_nonlinearity_F!(
-        cache.vec₂m₁, τ, input_data.common.f, d̂ⁿ, mesh2D, dof_map_m₁, quad)
+        cache.vec₂m₁, τ, input_data.f, d̂ⁿ, mesh2D, dof_map_m₁, quad)
 
     # Assemble minusHX[1:m₁]
     for i in 1:m₂
@@ -453,11 +453,11 @@ function compute_DHX₁₁!(
         dof_map_m₁, dof_map_m₂, quad, τα_2, τ²_4, m₂)
     # Compute (τ/2)α(tₙ₋₁/₂)⋅DG(v̂ⁿ_m₃)
     DG = assembly_global_matrix_DG(
-        τα_2, input_data.common.∂ₛg, v̂ⁿ_m₂, mesh1D, dof_map_m₂, quad)
+        τα_2, input_data.∂ₛg, v̂ⁿ_m₂, mesh1D, dof_map_m₂, quad)
 
     # Compute (τ²/4)⋅DF(d̂ⁿ)
     DF = assembly_global_matrix_DF(
-        τ²_4, input_data.common.df, d̂ⁿ, mesh2D, dof_map_m₁, quad)
+        τ²_4, input_data.df, d̂ⁿ, mesh2D, dof_map_m₁, quad)
 
     # Compute DHX₁₁
     @. DHX₁₁.data = A₁₁.data + DF.data

@@ -113,7 +113,7 @@ function crank_nicolson_linearized(
     @assert m₁ == dof_map_m₁.m
     @assert m₂ == dof_map_m₂.m
 
-    times = range(zero(T), input_data.common.t_final; step = τ)
+    times = range(zero(T), input_data.t_final; step = τ)
     nt = length(times)
 
     # ========================================
@@ -131,8 +131,8 @@ function crank_nicolson_linearized(
     # ========================================
     # Precompute constants
     # ========================================
-    q₁, q₂, q₃, q₄ = input_data.common.q₁, input_data.common.q₂, input_data.common.q₃,
-    input_data.common.q₄
+    q₁, q₂, q₃, q₄ = input_data.q₁, input_data.q₂, input_data.q₃,
+    input_data.q₄
 
     lhs_q₁₂₃ = q₁ + (τ / 2) * q₂ + (τ^2 / 4) * q₃
     cst1 = (q₁ - (τ / 2) * q₂ - (τ^2 / 4) * q₃) / lhs_q₁₂₃
@@ -167,7 +167,7 @@ function crank_nicolson_linearized(
     compute_rⁿ!(r¹, r⁰, z⁰, v⁰, vec_cst, M_m₂xm₂_factorized,
         input_data.f₂, t_half, mesh1D, dof_map_m₂, quad, cache)
     compute_vⁿ!(v¹, v⁰, d⁰, r¹, r⁰, v⁰, d⁰,
-        input_data.common.α, input_data.common.g, input_data.common.f, input_data.f₁,
+        input_data.α, input_data.g, input_data.f, input_data.f₁,
         t_half, τ, τ_4, τ²_4,
         mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices, A, cache)
 
@@ -184,7 +184,7 @@ function crank_nicolson_linearized(
     ###########################################################
     compute_vⁿ!(v¹, v⁰, d⁰, r¹, r⁰,
         v_ast_n, d_ast_n,
-        input_data.common.α, input_data.common.g, input_data.common.f, input_data.f₁,
+        input_data.α, input_data.g, input_data.f, input_data.f₁,
         t_half, τ, τ_4, τ²_4,
         mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices, A, cache)
 
@@ -224,7 +224,7 @@ function crank_nicolson_linearized(
         ###########################################################
         compute_vⁿ!(vⁿ, vⁿ⁻¹, dⁿ⁻¹, rⁿ, rⁿ⁻¹,
             v_ast_n, d_ast_n,
-            input_data.common.α, input_data.common.g, input_data.common.f, input_data.f₁,
+            input_data.α, input_data.g, input_data.f, input_data.f₁,
             t_half, τ, τ_4, τ²_4,
             mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, matrices, A, cache)
 

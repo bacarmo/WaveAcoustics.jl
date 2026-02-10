@@ -176,7 +176,7 @@ function pde_solve(
     # ========================================
     # Spatial discretization
     # ========================================
-    pmin, pmax = input_data.common.pmin, input_data.common.pmax
+    pmin, pmax = input_data.pmin, input_data.pmax
 
     mesh2D = CartesianMesh(pmin, pmax, Nx)
     mesh1D = CartesianMesh((pmin[1],), (pmax[1],), (Nx[1],))

@@ -57,9 +57,9 @@ function compute_v⁰_d⁰!(v⁰, d⁰, lhs_mat, input_data, mesh, dof_map, quad
     vec₂ = similar(v⁰)
     factorized_lhs_mat = cholesky(lhs_mat)
 
-    projection_H01_2d!(v⁰, input_data.common.∂ₓv₀, input_data.common.∂ᵧv₀,
+    projection_H01_2d!(v⁰, input_data.∂ₓv₀, input_data.∂ᵧv₀,
         factorized_lhs_mat, mesh, dof_map, quad, vec₁, vec₂)
-    projection_H01_2d!(d⁰, input_data.common.∂ₓu₀, input_data.common.∂ᵧu₀,
+    projection_H01_2d!(d⁰, input_data.∂ₓu₀, input_data.∂ᵧu₀,
         factorized_lhs_mat, mesh, dof_map, quad, vec₁, vec₂)
 
     return nothing
@@ -86,10 +86,10 @@ function compute_r⁰_z⁰!(r⁰, z⁰, lhs_mat, input_data, mesh, dof_map, quad
     scale = mesh.Δx[1] / 2
     W_basisP = quad.W_ϕP
 
-    assembly_rhs_1d!(rhs_vec, input_data.common.r₀, scale, W_basisP, mesh, dof_map, quad.xP)
+    assembly_rhs_1d!(rhs_vec, input_data.r₀, scale, W_basisP, mesh, dof_map, quad.xP)
     ldiv!(r⁰, factorized_lhs_mat, rhs_vec)
 
-    assembly_rhs_1d!(rhs_vec, input_data.common.z₀, scale, W_basisP, mesh, dof_map, quad.xP)
+    assembly_rhs_1d!(rhs_vec, input_data.z₀, scale, W_basisP, mesh, dof_map, quad.xP)
     ldiv!(z⁰, factorized_lhs_mat, rhs_vec)
 
     return nothing
