@@ -6,6 +6,7 @@ using Printf: @printf
 using SparseArrays: sparse, spzeros, SparseMatrixCSC
 using LinearAlgebra: Symmetric, lmul!, cholesky, ldiv!, mul!
 using FixedSizeArrays: FixedSizeArray
+using FunctionWrappers: FunctionWrapper
 
 # Exports
 export PDECommonData, PDEInputData
