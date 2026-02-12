@@ -1,5 +1,9 @@
+const ScalarFunction1D = FunctionWrapper{Float64, Tuple{Float64}}
+const ScalarFunction2D = FunctionWrapper{Float64, Tuple{Float64, Float64}}
+const ScalarFunction3D = FunctionWrapper{Float64, Tuple{Float64, Float64, Float64}}
+
 """
-    PDEInputData{Fα, Ff, Fdf, Fg, F∂ₛg, Fu₀, F∂ₓu₀, F∂ᵧu₀, Fv₀, F∂ₓv₀, F∂ᵧv₀, Fz₀, Fr₀}
+    PDEInputData
 
 Input data configuration for coupled wave-acoustic PDE system.
 
@@ -33,71 +37,67 @@ where v = ∂u/∂t couples the wave velocity at Γ₁ to the acoustic equation.
 - `q₄::Float64`: Wave-acoustic coupling strength. Default: `1.0`
 
 ### Coefficient Functions
-- `α::Fα`: Time-dependent wave diffusion coefficient α(t)
-- `f::Ff`, `df::Fdf`: Nonlinear wave term f(s) and derivative f'(s)
-- `g::Fg`, `∂ₛg::F∂ₛg`: Nonlinear coupling function g(x,s) and s-derivative ∂ₛg(x,s)
+- `α::ScalarFunction1D`: Time-dependent wave diffusion coefficient α(t)
+- `f::ScalarFunction1D`, `df::ScalarFunction1D`: Nonlinear wave term f(s) and derivative f'(s)
+- `g::ScalarFunction2D`, `∂ₛg::ScalarFunction2D`: Nonlinear coupling function g(x,s) and s-derivative ∂ₛg(x,s)
 
 ### Wave Initial Conditions (2D functions on Ω)
-- `u₀::Fu₀`, `∂ₓu₀::F∂ₓu₀`, `∂ᵧu₀::F∂ᵧu₀`: Displacement u(x,y,0) and spatial derivatives
-- `v₀::Fv₀`, `∂ₓv₀::F∂ₓv₀`, `∂ᵧv₀::F∂ᵧv₀`: Velocity v(x,y,0) = ∂ₜu(x,y,0) and spatial derivatives
+- `u₀::ScalarFunction2D`, `∂ₓu₀::ScalarFunction2D`, `∂ᵧu₀::ScalarFunction2D`: Displacement u(x,y,0) and spatial derivatives
+- `v₀::ScalarFunction2D`, `∂ₓv₀::ScalarFunction2D`, `∂ᵧv₀::ScalarFunction2D`: Velocity v(x,y,0) = ∂ₜu(x,y,0) and spatial derivatives
 
 ### Acoustic Initial Conditions (1D functions on Γ₁)
-- `z₀::Fz₀`: Acoustic displacement z(x,0)
-- `r₀::Fr₀`: Acoustic velocity r(x,0) = ∂ₜz(x,0)
+- `z₀::ScalarFunction1D`: Acoustic displacement z(x,0)
+- `r₀::ScalarFunction1D`: Acoustic velocity r(x,0) = ∂ₜz(x,0)
 
 ### Source Terms
-- `f₁::Ff₁`: Wave source term f₁(x,y,t) on Ω
-- `f₂::Ff₂`: Acoustic source term f₂(x,t) on Γ₁
+- `f₁::ScalarFunction3D`: Wave source term f₁(x,y,t) on Ω
+- `f₂::ScalarFunction2D`: Acoustic source term f₂(x,t) on Γ₁
 
 ### Analytical Solutions
 For manufactured solution cases, provide analytical solutions for convergence studies:
-- `u::Fu`, `v::Fv`: Analytical wave solutions u(x,y,t), v(x,y,t)
-- `z::Fz`, `r::Fr`: Analytical acoustic solutions z(x,t), r(x,t)
+- `u::Union{Nothing,ScalarFunction3D}`, `v::Union{Nothing,ScalarFunction3D}`: Analytical wave solutions u(x,y,t), v(x,y,t)
+- `z::Union{Nothing,ScalarFunction3D}`, `r::Union{Nothing,ScalarFunction2D}`: Analytical acoustic solutions z(x,t), r(x,t)
 
 For physical simulations without known solutions, these should return `nothing`.
 """
-Base.@kwdef struct PDEInputData{
-    Fα, Ff, Fdf, Fg, F∂ₛg,
-    Fu₀, F∂ₓu₀, F∂ᵧu₀, Fv₀, F∂ₓv₀, F∂ᵧv₀,
-    Fz₀, Fr₀,
-    Ff₁, Ff₂, Fu, Fv, Fz, Fr}
+struct PDEInputData
     # Domain 
-    pmin::NTuple{2, Float64} = (0.0, 0.0)
-    pmax::NTuple{2, Float64} = (1.0, 1.0)
-    t_final::Float64 = 1.0
+    pmin::NTuple{2, Float64}
+    pmax::NTuple{2, Float64}
+    t_final::Float64
 
     # Constants
-    q₁::Float64 = 1.0
-    q₂::Float64 = 1.0
-    q₃::Float64 = 1.0
-    q₄::Float64 = 1.0
+    q₁::Float64
+    q₂::Float64
+    q₃::Float64
+    q₄::Float64
 
     # Functions
-    α::Fα
-    f::Ff
-    df::Fdf
-    g::Fg
-    ∂ₛg::F∂ₛg
+    α::ScalarFunction1D
+    f::ScalarFunction1D
+    df::ScalarFunction1D
+    g::ScalarFunction2D
+    ∂ₛg::ScalarFunction2D
 
     # Wave initial conditions
-    u₀::Fu₀
-    ∂ₓu₀::F∂ₓu₀
-    ∂ᵧu₀::F∂ᵧu₀
-    v₀::Fv₀
-    ∂ₓv₀::F∂ₓv₀
-    ∂ᵧv₀::F∂ᵧv₀
+    u₀::ScalarFunction2D
+    ∂ₓu₀::ScalarFunction2D
+    ∂ᵧu₀::ScalarFunction2D
+    v₀::ScalarFunction2D
+    ∂ₓv₀::ScalarFunction2D
+    ∂ᵧv₀::ScalarFunction2D
 
     # Acoustic initial conditions
-    z₀::Fz₀
-    r₀::Fr₀
+    z₀::ScalarFunction1D
+    r₀::ScalarFunction1D
 
     # Source terms and analytical solutions
-    f₁::Ff₁
-    f₂::Ff₂
-    u::Fu
-    v::Fv
-    z::Fz
-    r::Fr
+    f₁::ScalarFunction3D
+    f₂::ScalarFunction2D
+    u::Union{Nothing, ScalarFunction3D}
+    v::Union{Nothing, ScalarFunction3D}
+    z::Union{Nothing, ScalarFunction2D}
+    r::Union{Nothing, ScalarFunction2D}
 end
 
 # ============================================================================
@@ -155,17 +155,19 @@ function example1_manufactured(a::Float64 = 2.4)
     z₀ = x -> sinpi(x)
     r₀ = x -> 0.0
 
-    return PDEInputData(;
-        pmin = (0.0, ymin),
-        pmax = (1.0, 1.0),
-        t_final = 1.0,
+    return PDEInputData(
+        (0.0, ymin),
+        (1.0, 1.0),
+        1.0,
         q₁, q₂, q₃, q₄,
-        α, f, df, g, ∂ₛg,
-        u₀, ∂ₓu₀, ∂ᵧu₀,
-        v₀, ∂ₓv₀, ∂ᵧv₀,
-        z₀, r₀,
-        f₁, f₂,
-        u, v, z, r
+        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
+        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
+        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
+        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
+        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
+        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
+        ScalarFunction3D(u), ScalarFunction3D(v),
+        ScalarFunction2D(z), ScalarFunction2D(r)
     )
 end
 
@@ -205,20 +207,21 @@ function example1_zero_source(a::Float64 = 2.4)
     z₀ = x -> sinpi(x)
     r₀ = x -> 0.0
 
-    return PDEInputData(;
-        pmin = (0.0, ymin),
-        pmax = (1.0, 1.0),
-        t_final = 1.0,
+    return PDEInputData(
+        (0.0, ymin),
+        (1.0, 1.0),
+        1.0,
         q₁, q₂, q₃, q₄,
-        α, f, df, g, ∂ₛg,
-        u₀, ∂ₓu₀, ∂ᵧu₀,
-        v₀, ∂ₓv₀, ∂ᵧv₀,
-        z₀, r₀,
-        f₁, f₂,
-        u = nothing,
-        v = nothing,
-        z = nothing,
-        r = nothing
+        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
+        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
+        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
+        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
+        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
+        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
+        nothing,
+        nothing,
+        nothing,
+        nothing
     )
 end
 
@@ -274,17 +277,19 @@ function example2_manufactured(a::Float64 = 2.4)
     z₀ = x -> sinpi(x)
     r₀ = x -> 0.0
 
-    return PDEInputData(;
-        pmin = (0.0, ymin),
-        pmax = (1.0, 1.0),
-        t_final = 1.0,
+    return PDEInputData(
+        (0.0, ymin),
+        (1.0, 1.0),
+        1.0,
         q₁, q₂, q₃, q₄,
-        α, f, df, g, ∂ₛg,
-        u₀, ∂ₓu₀, ∂ᵧu₀,
-        v₀, ∂ₓv₀, ∂ᵧv₀,
-        z₀, r₀,
-        f₁, f₂,
-        u, v, z, r
+        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
+        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
+        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
+        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
+        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
+        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
+        ScalarFunction3D(u), ScalarFunction3D(v),
+        ScalarFunction2D(z), ScalarFunction2D(r)
     )
 end
 
@@ -324,19 +329,20 @@ function example2_zero_source(a::Float64 = 2.4)
     z₀ = x -> sinpi(x)
     r₀ = x -> 0.0
 
-    return PDEInputData(;
-        pmin = (0.0, ymin),
-        pmax = (1.0, 1.0),
-        t_final = 1.0,
+    return PDEInputData(
+        (0.0, ymin),
+        (1.0, 1.0),
+        1.0,
         q₁, q₂, q₃, q₄,
-        α, f, df, g, ∂ₛg,
-        u₀, ∂ₓu₀, ∂ᵧu₀,
-        v₀, ∂ₓv₀, ∂ᵧv₀,
-        z₀, r₀,
-        f₁, f₂,
-        u = nothing,
-        v = nothing,
-        z = nothing,
-        r = nothing
+        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
+        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
+        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
+        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
+        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
+        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
+        nothing,
+        nothing,
+        nothing,
+        nothing
     )
 end
