@@ -1,103 +1,123 @@
-const ScalarFunction1D = FunctionWrapper{Float64, Tuple{Float64}}
-const ScalarFunction2D = FunctionWrapper{Float64, Tuple{Float64, Float64}}
-const ScalarFunction3D = FunctionWrapper{Float64, Tuple{Float64, Float64, Float64}}
-
 """
-    PDEInputData
+    PDEInputData{Tα, Tf, Tdf, Tg, T∂ₛg, Tu₀, T∂ₓu₀, T∂ᵧu₀, Tv₀, T∂ₓv₀, T∂ᵧv₀, Tz₀, Tr₀, Tf₁, Tf₂, Tu, Tv, Tz, Tr}
 
 Input data configuration for coupled wave-acoustic PDE system.
 
 ## Mathematical Specification
 
-Wave equation on rectangular domain Ω = ]xmin,xmax[ × ]ymin,ymax[:
+Wave equation on rectangular domain ``Ω = ]x_{min},x_{max}[ × ]y_{min},y_{max}[``:
 ```math
-\\frac{∂²u}{∂t²} - α(t)Δu + f(u) = f₁(x,y,t) \\quad \\text{in } Ω
+\\frac{∂²u}{∂t²}(x,y,t) - α(t)Δu(x,y,t) + f(u(x,y,t)) = f₁(x,y,t)
 ```
 
 with homogeneous boundary conditions on Γ₀ = ∂Ω \\ Γ₁.
 
-Acoustic equation on bottom boundary Γ₁ = {(x,ymin) : x ∈ ]xmin,xmax[}:
+Acoustic equation on bottom boundary ``Γ₁ = {(x,y_{min}) : x ∈ ]x_{min},x_{max}[}``:
 ```math
-q₁\\frac{∂²z}{∂t²} + q₂\\frac{∂z}{∂t} + q₃z + q₄v(x,ymin,t) = f₂(x,t)
+q₁\\frac{∂²z}{∂t²}(x,t) + q₂\\frac{∂z}{∂t}(x,t) + q₃z(x,t) + q₄\\frac{∂u}{∂t}(x,y_{min},t) = f₂(x,t)
 ```
 
-where v = ∂u/∂t couples the wave velocity at Γ₁ to the acoustic equation.
+with 
+```math
+\\frac{\\partial u}{\\partial y}(x,y_{min},t)
+= \\frac{\\partial z}{\\partial t}(x,t) 
+- g\\left(x, \\frac{\\partial u}{\\partial t}(x,y_{min},t)\\right)
+```
+
+and initial conditions:
+```math
+\\begin{aligned}
+& u(x,y,0) = u_0(x,y), \\quad \\frac{\\partial u}{\\partial t}(x,y,0) = v_0(x,y), \\quad (x,y) \\in \\Omega,
+\\\\
+& z(x,0) = z_0(x), \\quad \\frac{\\partial z}{\\partial t}(x,0) = r_0(x), \\quad x \\in ]x_{min},x_{max}[.
+\\end{aligned}
+```
 
 ## Fields
 
 ### Domain Configuration
-- `pmin::NTuple{2,Float64}`: Bottom-left corner (xmin, ymin). Default: `(0.0, 0.0)`
-- `pmax::NTuple{2,Float64}`: Top-right corner (xmax, ymax). Default: `(1.0, 1.0)`
-- `t_final::Float64`: Final simulation time. Default: `1.0`
+- `pmin::NTuple{2,Float64}`: Bottom-left corner (xmin, ymin)
+- `pmax::NTuple{2,Float64}`: Top-right corner (xmax, ymax)
+- `t_final::Float64`: Final simulation time
 
 ### Physical Parameters
-- `q₁::Float64`: Acoustic acceleration coefficient. Default: `1.0`
-- `q₂::Float64`: Acoustic velocity coefficient. Default: `1.0`
-- `q₃::Float64`: Acoustic displacement coefficient. Default: `1.0`
-- `q₄::Float64`: Wave-acoustic coupling strength. Default: `1.0`
+- `q₁::Float64`: Acoustic acceleration coefficient
+- `q₂::Float64`: Acoustic velocity coefficient
+- `q₃::Float64`: Acoustic displacement coefficient
+- `q₄::Float64`: Wave-acoustic coupling strength
 
 ### Coefficient Functions
-- `α::ScalarFunction1D`: Time-dependent wave diffusion coefficient α(t)
-- `f::ScalarFunction1D`, `df::ScalarFunction1D`: Nonlinear wave term f(s) and derivative f'(s)
-- `g::ScalarFunction2D`, `∂ₛg::ScalarFunction2D`: Nonlinear coupling function g(x,s) and s-derivative ∂ₛg(x,s)
+- `α::Tα`: Time-dependent wave diffusion coefficient α(t)
+- `f::Tf`, `df::Tdf`: Nonlinear wave term f(s) and derivative f'(s)
+- `g::Tg`, `∂ₛg::T∂ₛg`: Nonlinear coupling g(x,s) and s-derivative ∂ₛg(x,s)
 
 ### Wave Initial Conditions (2D functions on Ω)
-- `u₀::ScalarFunction2D`, `∂ₓu₀::ScalarFunction2D`, `∂ᵧu₀::ScalarFunction2D`: Displacement u(x,y,0) and spatial derivatives
-- `v₀::ScalarFunction2D`, `∂ₓv₀::ScalarFunction2D`, `∂ᵧv₀::ScalarFunction2D`: Velocity v(x,y,0) = ∂ₜu(x,y,0) and spatial derivatives
+- `u₀::Tu₀`: Displacement u(x,y,0)
+- `∂ₓu₀::T∂ₓu₀`, `∂ᵧu₀::T∂ᵧu₀`: Spatial derivatives of displacement
+- `v₀::Tv₀`: Velocity v(x,y,0) = ∂ₜu(x,y,0)
+- `∂ₓv₀::T∂ₓv₀`, `∂ᵧv₀::T∂ᵧv₀`: Spatial derivatives of velocity
 
 ### Acoustic Initial Conditions (1D functions on Γ₁)
-- `z₀::ScalarFunction1D`: Acoustic displacement z(x,0)
-- `r₀::ScalarFunction1D`: Acoustic velocity r(x,0) = ∂ₜz(x,0)
+- `z₀::Tz₀`: Acoustic displacement z(x,0)
+- `r₀::Tr₀`: Acoustic velocity r(x,0) = ∂ₜz(x,0)
 
 ### Source Terms
-- `f₁::ScalarFunction3D`: Wave source term f₁(x,y,t) on Ω
-- `f₂::ScalarFunction2D`: Acoustic source term f₂(x,t) on Γ₁
+- `f₁::Tf₁`: Wave source term f₁(x,y,t) on Ω
+- `f₂::Tf₂`: Acoustic source term f₂(x,t) on Γ₁
 
 ### Analytical Solutions
 For manufactured solution cases, provide analytical solutions for convergence studies:
-- `u::Union{Nothing,ScalarFunction3D}`, `v::Union{Nothing,ScalarFunction3D}`: Analytical wave solutions u(x,y,t), v(x,y,t)
-- `z::Union{Nothing,ScalarFunction3D}`, `r::Union{Nothing,ScalarFunction2D}`: Analytical acoustic solutions z(x,t), r(x,t)
+- `u::Tu`, `v::Tv`: Analytical wave solutions u(x,y,t), v(x,y,t)
+- `z::Tz`, `r::Tr`: Analytical acoustic solutions z(x,t), r(x,t)
 
-For physical simulations without known solutions, these should return `nothing`.
+For physical simulations without known solutions, these fields are `nothing`.
 """
-struct PDEInputData
-    # Domain 
+struct PDEInputData{
+    Tα, Tf, Tdf, Tg, T∂ₛg,
+    Tu₀, T∂ₓu₀, T∂ᵧu₀,
+    Tv₀, T∂ₓv₀, T∂ᵧv₀,
+    Tz₀, Tr₀,
+    Tf₁, Tf₂,
+    Tu, Tv, Tz, Tr}
+    # Domain configuration
     pmin::NTuple{2, Float64}
     pmax::NTuple{2, Float64}
     t_final::Float64
 
-    # Constants
+    # Physical parameters
     q₁::Float64
     q₂::Float64
     q₃::Float64
     q₄::Float64
 
-    # Functions
-    α::ScalarFunction1D
-    f::ScalarFunction1D
-    df::ScalarFunction1D
-    g::ScalarFunction2D
-    ∂ₛg::ScalarFunction2D
+    # Coefficient functions
+    α::Tα
+    f::Tf
+    df::Tdf
+    g::Tg
+    ∂ₛg::T∂ₛg
 
     # Wave initial conditions
-    u₀::ScalarFunction2D
-    ∂ₓu₀::ScalarFunction2D
-    ∂ᵧu₀::ScalarFunction2D
-    v₀::ScalarFunction2D
-    ∂ₓv₀::ScalarFunction2D
-    ∂ᵧv₀::ScalarFunction2D
+    u₀::Tu₀
+    ∂ₓu₀::T∂ₓu₀
+    ∂ᵧu₀::T∂ᵧu₀
+    v₀::Tv₀
+    ∂ₓv₀::T∂ₓv₀
+    ∂ᵧv₀::T∂ᵧv₀
 
     # Acoustic initial conditions
-    z₀::ScalarFunction1D
-    r₀::ScalarFunction1D
+    z₀::Tz₀
+    r₀::Tr₀
 
-    # Source terms and analytical solutions
-    f₁::ScalarFunction3D
-    f₂::ScalarFunction2D
-    u::Union{Nothing, ScalarFunction3D}
-    v::Union{Nothing, ScalarFunction3D}
-    z::Union{Nothing, ScalarFunction2D}
-    r::Union{Nothing, ScalarFunction2D}
+    # Source terms
+    f₁::Tf₁
+    f₂::Tf₂
+
+    # Analytical solutions
+    u::Tu
+    v::Tv
+    z::Tz
+    r::Tr
 end
 
 # ============================================================================
@@ -106,243 +126,415 @@ end
 """
     example1_manufactured(a::Float64=2.4) -> PDEInputData
 
-Example 1 with manufactured solutions for convergence study.
+Manufactured solution with oscillatory coupling ``g(x,s) = (1+e^{-x^2})(\\sin(s)+2s)``.
+
+Wave solution: ``u(x,y,t) = (x^a-x)(y^a-1)(4+t^2)``. 
+Acoustic solution obtained by integrating 
+``z'(x,t) = -u_y(x,y_{min},t) + g(x,u'(x,y_{min},t))``.
+
 
 # Arguments
-- `a::Float64=2.4`: Exponent for function u(x,y,t) = (xᵃ-x)(yᵃ-1)(4+t²)
+- `a::Float64=2.4`: Smoothness parameter controlling solution regularity.
 """
 function example1_manufactured(a::Float64 = 2.4)
-    # Constants
+    # Precompute exponent-related constants
     a_minus_1 = a - 1.0
     a_minus_2 = a - 2.0
     axa_minus_1 = a * a_minus_1
+
+    # Physical parameters
     q₁ = q₂ = q₃ = q₄ = 1.0
     ymin = 0.0
 
     # Coefficient functions
-    α = t -> 1.0 + exp(-t)
-    f = s -> s * abs(s)^3
-    df = s -> 4 * abs(s)^3
-    g = (x, s) -> (1 + exp(-x^2)) * (sin(s) + 2s)
-    ∂ₛg = (x, s) -> (1 + exp(-x^2)) * (cos(s) + 2)
+    α = @inline t -> 1.0 + exp(-t)
+
+    f = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return s * s_abs3
+    end
+    df = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return 4.0 * s_abs3
+    end
+
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * muladd(2.0, s, sin(s))
+    ∂ₛg = @inline (x, s) -> (1.0 + exp(-x * x)) * (2.0 + cos(s))
 
     # Analytical solutions
-    u = (x, y, t) -> (x^a - x) * (y^a - 1) * (4 + t^2)
-    v = (x, y, t) -> (x^a - x) * (y^a - 1) * (2 * t)
-    z = (x, t) -> sinpi(x) +
-                  (1 + exp(-x^2)) *
-                  ((cos(-(x^a - x) * (2 * t)) - 1) / (2 * (x^a - x)) -
-                   (x^a - x) * (2 * t^2))
-    r = (x, t) -> (1 + exp(-x^2)) * (sin(-(x^a - x) * (2 * t)) - (x^a - x) * (4 * t))
+    u = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * (4.0 + t * t)
+    end
+    v = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * (2.0 * t)
+    end
 
-    # Auxiliary functions for manufactured sources
-    @inline ∂ₜₜu(x, y, t) = (x^a - x) * (y^a - 1) * 2
-    @inline Δu(x, y, t) = ((axa_minus_1 * x^a_minus_2) * (y^a - 1) +
-                           (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4 + t^2)
-    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^a - x) * (2 + cos(2 * t * (x^a - x)))
+    z = @inline function (x, t)
+        xa = x^a
+        xa_minus_x = xa - x
+        two_t = 2.0 * t
+        exp_term = 1.0 + exp(-x * x)
+
+        return sinpi(x) +
+               exp_term * ((cos(-xa_minus_x * two_t) - 1.0) /
+                (2.0 * xa_minus_x) - xa_minus_x * (two_t * t))
+    end
+    r = @inline function (x, t)
+        xa = x^a
+        xa_minus_x = xa - x
+        exp_term = 1.0 + exp(-x * x)
+
+        return exp_term * (sin(-xa_minus_x * (2.0 * t)) - xa_minus_x * (4.0 * t))
+    end
+
+    # Auxiliary functions for manufactured source terms
+    ∂ₜₜu = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * 2.0
+    end
+    Δu = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        xa_minus_2 = x^a_minus_2
+        ya_minus_2 = y^a_minus_2
+        time_term = 4.0 + t * t
+
+        return ((axa_minus_1 * xa_minus_2) * (ya - 1.0) +
+                (xa - x) * (axa_minus_1 * ya_minus_2)) * time_term
+    end
+    ∂ₜₜz = @inline function (x, t)
+        xa = x^a
+        xa_minus_x = xa - x
+        exp_term = 1.0 + exp(-x * x)
+
+        return -2.0 * exp_term * xa_minus_x * (2.0 + cos(2.0 * t * xa_minus_x))
+    end
 
     # Manufactured source terms
-    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
-    f₂ = (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) + q₄ * v(x, ymin, t)
+    f₁ = @inline (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
+    f₂ = @inline (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) +
+                           q₄ * v(x, ymin, t)
 
     # Initial conditions
-    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
-    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
-    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
-    v₀ = (x, y) -> 0.0
-    ∂ₓv₀ = (x, y) -> 0.0
-    ∂ᵧv₀ = (x, y) -> 0.0
-    z₀ = x -> sinpi(x)
-    r₀ = x -> 0.0
+    u₀ = @inline function (x, y)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * 4.0
+    end
+    ∂ₓu₀ = @inline function (x, y)
+        ya = y^a
+        xa_minus_1 = x^a_minus_1
+        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
+    end
+    ∂ᵧu₀ = @inline function (x, y)
+        xa = x^a
+        ya_minus_1 = y^a_minus_1
+        return (xa - x) * (a * ya_minus_1) * 4.0
+    end
+    v₀ = @inline (x, y) -> 0.0
+    ∂ₓv₀ = @inline (x, y) -> 0.0
+    ∂ᵧv₀ = @inline (x, y) -> 0.0
+    z₀ = @inline x -> sinpi(x)
+    r₀ = @inline x -> 0.0
 
     return PDEInputData(
         (0.0, ymin),
         (1.0, 1.0),
         1.0,
         q₁, q₂, q₃, q₄,
-        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
-        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
-        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
-        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
-        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
-        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
-        ScalarFunction3D(u), ScalarFunction3D(v),
-        ScalarFunction2D(z), ScalarFunction2D(r)
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u, v, z, r
     )
 end
 
 """
     example1_zero_source(a::Float64=2.4) -> PDEInputData
 
-Example 1 with zero source terms for physical simulation.
-No analytical solution available.
+Construct Example 1 physical simulation variant with zero source terms.
+
+This version omits the manufactured source terms (f₁ = f₂ = 0).
+No analytical solution is available for this configuration.
 
 # Arguments
-- `a::Float64=2.4`: Exponent for function u₀(x,y) = 4(xᵃ-x)(yᵃ-1)
+- `a::Float64=2.4`: Smoothness parameter for initial conditions.
 """
 function example1_zero_source(a::Float64 = 2.4)
-    # Constants
+    # Precompute exponent-related constants
     a_minus_1 = a - 1.0
+
+    # Physical parameters
     q₁ = q₂ = q₃ = q₄ = 1.0
     ymin = 0.0
 
     # Coefficient functions
-    α = t -> 1.0 + exp(-t)
-    f = s -> s * abs(s)^3
-    df = s -> 4 * abs(s)^3
-    g = (x, s) -> (1 + exp(-x^2)) * (sin(s) + 2s)
-    ∂ₛg = (x, s) -> (1 + exp(-x^2)) * (cos(s) + 2)
+    α = @inline t -> 1.0 + exp(-t)
 
-    # Zero source terms
-    f₁ = (x, y, t) -> 0.0
-    f₂ = (x, t) -> 0.0
+    f = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return s * s_abs3
+    end
+    df = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return 4.0 * s_abs3
+    end
 
-    # Initial conditions
-    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
-    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
-    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
-    v₀ = (x, y) -> 0.0
-    ∂ₓv₀ = (x, y) -> 0.0
-    ∂ᵧv₀ = (x, y) -> 0.0
-    z₀ = x -> sinpi(x)
-    r₀ = x -> 0.0
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * muladd(2.0, s, sin(s))
+    ∂ₛg = @inline (x, s) -> (1.0 + exp(-x * x)) * (2.0 + cos(s))
+
+    # Zero source terms (pure initial-boundary value problem)
+    f₁ = @inline (x, y, t) -> 0.0
+    f₂ = @inline (x, t) -> 0.0
+
+    # Initial conditions (same as manufactured case at t = 0)
+    u₀ = @inline function (x, y)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * 4.0
+    end
+    ∂ₓu₀ = @inline function (x, y)
+        ya = y^a
+        xa_minus_1 = x^a_minus_1
+        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
+    end
+    ∂ᵧu₀ = @inline function (x, y)
+        xa = x^a
+        ya_minus_1 = y^a_minus_1
+        return (xa - x) * (a * ya_minus_1) * 4.0
+    end
+    v₀ = @inline (x, y) -> 0.0
+    ∂ₓv₀ = @inline (x, y) -> 0.0
+    ∂ᵧv₀ = @inline (x, y) -> 0.0
+    z₀ = @inline x -> sinpi(x)
+    r₀ = @inline x -> 0.0
 
     return PDEInputData(
         (0.0, ymin),
         (1.0, 1.0),
         1.0,
         q₁, q₂, q₃, q₄,
-        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
-        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
-        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
-        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
-        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
-        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
-        nothing,
-        nothing,
-        nothing,
-        nothing
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        nothing, nothing, nothing, nothing
     )
 end
 
 # ============================================================================
-# Example 2
+# Example 2: Linear Coupling Test Case
 # ============================================================================
 """
     example2_manufactured(a::Float64=2.4) -> PDEInputData
 
-Example 2 with manufactured solutions for convergence study.
+Manufactured solution with linear coupling ``g(x,s) = (1+e^{-x^2})s``.
+
+Wave solution: ``u(x,y,t) = (x^a-x)(y^a-1)(4+t^2)``. 
+Acoustic solution obtained by integrating 
+``z'(x,t) = -u_y(x,y_{min},t) + g(x,u'(x,y_{min},t))``.
 
 # Arguments
-- `a::Float64=2.4`: Exponent for function u(x,y,t) = (xᵃ-x)(yᵃ-1)(4+t²)
+- `a::Float64=2.4`: Smoothness parameter controlling solution regularity
 """
 function example2_manufactured(a::Float64 = 2.4)
-    # Constants
+    # Precompute exponent-related constants
     a_minus_1 = a - 1.0
     a_minus_2 = a - 2.0
     axa_minus_1 = a * a_minus_1
+
+    # Physical parameters
     q₁ = q₂ = q₃ = q₄ = 1.0
     ymin = 0.0
 
     # Coefficient functions
-    α = t -> 1.0 + exp(-t)
-    f = s -> s * abs(s)^3
-    df = s -> 4 * abs(s)^3
-    g = (x, s) -> (1 + exp(-x * x)) * s
-    ∂ₛg = (x, s) -> (1 + exp(-x * x))
+    α = @inline t -> 1.0 + exp(-t)
+
+    f = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return s * s_abs3
+    end
+    df = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return 4.0 * s_abs3
+    end
+
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * s
+    ∂ₛg = @inline (x, s) -> 1.0 + exp(-x * x)
 
     # Analytical solutions
-    u = (x, y, t) -> (x^a - x) * (y^a - 1) * (4 + t^2)
-    v = (x, y, t) -> (x^a - x) * (y^a - 1) * (2 * t)
-    z = (x, t) -> sinpi(x) - (1 + exp(-x * x)) * (x^a - x) * t^2
-    r = (x, t) -> -(1 + exp(-x * x)) * (x^a - x) * (2 * t)
+    u = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * (4.0 + t * t)
+    end
+    v = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * (2.0 * t)
+    end
 
-    # Auxiliary functions for manufactured sources
-    @inline ∂ₜₜu(x, y, t) = (x^a - x) * (y^a - 1) * 2
-    @inline Δu(x, y, t) = ((axa_minus_1 * x^a_minus_2) * (y^a - 1) +
-                           (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4 + t^2)
-    @inline ∂ₜₜz(x, t) = -2 * (1 + exp(-x^2)) * (x^a - x)
+    z = @inline function (x, t)
+        xa = x^a
+        exp_term = 1.0 + exp(-x * x)
+        return sinpi(x) - exp_term * (xa - x) * (t * t)
+    end
+
+    r = @inline function (x, t)
+        xa = x^a
+        exp_term = 1.0 + exp(-x * x)
+        return -exp_term * (xa - x) * (2.0 * t)
+    end
+
+    # Auxiliary functions for manufactured source terms
+    ∂ₜₜu = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * 2.0
+    end
+    Δu = @inline function (x, y, t)
+        xa = x^a
+        ya = y^a
+        xa_minus_2 = x^a_minus_2
+        ya_minus_2 = y^a_minus_2
+        time_term = 4.0 + t * t
+
+        return ((axa_minus_1 * xa_minus_2) * (ya - 1.0) +
+                (xa - x) * (axa_minus_1 * ya_minus_2)) * time_term
+    end
+    ∂ₜₜz = @inline function (x, t)
+        xa = x^a
+        exp_term = 1.0 + exp(-x * x)
+        return -2.0 * exp_term * (xa - x)
+    end
 
     # Manufactured source terms
-    f₁ = (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
-    f₂ = (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) + q₄ * v(x, ymin, t)
+    f₁ = @inline (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
+    f₂ = @inline (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) +
+                           q₄ * v(x, ymin, t)
 
     # Initial conditions
-    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
-    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
-    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
-    v₀ = (x, y) -> 0.0
-    ∂ₓv₀ = (x, y) -> 0.0
-    ∂ᵧv₀ = (x, y) -> 0.0
-    z₀ = x -> sinpi(x)
-    r₀ = x -> 0.0
+    u₀ = @inline function (x, y)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * 4.0
+    end
+    ∂ₓu₀ = @inline function (x, y)
+        ya = y^a
+        xa_minus_1 = x^a_minus_1
+        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
+    end
+    ∂ᵧu₀ = @inline function (x, y)
+        xa = x^a
+        ya_minus_1 = y^a_minus_1
+        return (xa - x) * (a * ya_minus_1) * 4.0
+    end
+    v₀ = @inline (x, y) -> 0.0
+    ∂ₓv₀ = @inline (x, y) -> 0.0
+    ∂ᵧv₀ = @inline (x, y) -> 0.0
+    z₀ = @inline x -> sinpi(x)
+    r₀ = @inline x -> 0.0
 
     return PDEInputData(
         (0.0, ymin),
         (1.0, 1.0),
         1.0,
         q₁, q₂, q₃, q₄,
-        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
-        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
-        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
-        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
-        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
-        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
-        ScalarFunction3D(u), ScalarFunction3D(v),
-        ScalarFunction2D(z), ScalarFunction2D(r)
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u, v, z, r
     )
 end
 
 """
     example2_zero_source(a::Float64=2.4) -> PDEInputData
 
-Example 2 with zero source terms for physical simulation.
-No analytical solution available.
+Construct Example 2 physical simulation variant with zero source terms.
+
+This version omits the manufactured source terms (f₁ = f₂ = 0).
+No analytical solution is available for this configuration.
 
 # Arguments
-- `a::Float64=2.4`: Exponent for function u₀(x,y) = 4(xᵃ-x)(yᵃ-1)
+- `a::Float64=2.4`: Smoothness parameter for initial conditions
 """
 function example2_zero_source(a::Float64 = 2.4)
-    # Constants
+    # Precompute exponent-related constants
     a_minus_1 = a - 1.0
+
+    # Physical parameters
     q₁ = q₂ = q₃ = q₄ = 1.0
     ymin = 0.0
 
     # Coefficient functions
-    α = t -> 1.0 + exp(-t)
-    f = s -> s * abs(s)^3
-    df = s -> 4 * abs(s)^3
-    g = (x, s) -> (1 + exp(-x * x)) * s
-    ∂ₛg = (x, s) -> (1 + exp(-x * x))
+    α = @inline t -> 1.0 + exp(-t)
+
+    f = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return s * s_abs3
+    end
+    df = @inline function (s)
+        s_abs = abs(s)
+        s_abs3 = s_abs * s_abs * s_abs
+        return 4.0 * s_abs3
+    end
+
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * s
+    ∂ₛg = @inline (x, s) -> 1.0 + exp(-x * x)
 
     # Zero source terms
-    f₁ = (x, y, t) -> 0.0
-    f₂ = (x, t) -> 0.0
+    f₁ = @inline (x, y, t) -> 0.0
+    f₂ = @inline (x, t) -> 0.0
 
     # Initial conditions
-    u₀ = (x, y) -> (x^a - x) * (y^a - 1) * 4
-    ∂ₓu₀ = (x, y) -> (a * x^a_minus_1 - 1) * (y^a - 1) * 4
-    ∂ᵧu₀ = (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4
-    v₀ = (x, y) -> 0.0
-    ∂ₓv₀ = (x, y) -> 0.0
-    ∂ᵧv₀ = (x, y) -> 0.0
-    z₀ = x -> sinpi(x)
-    r₀ = x -> 0.0
+    u₀ = @inline function (x, y)
+        xa = x^a
+        ya = y^a
+        return (xa - x) * (ya - 1.0) * 4.0
+    end
+    ∂ₓu₀ = @inline function (x, y)
+        ya = y^a
+        xa_minus_1 = x^a_minus_1
+        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
+    end
+    ∂ᵧu₀ = @inline function (x, y)
+        xa = x^a
+        ya_minus_1 = y^a_minus_1
+        return (xa - x) * (a * ya_minus_1) * 4.0
+    end
+    v₀ = @inline (x, y) -> 0.0
+    ∂ₓv₀ = @inline (x, y) -> 0.0
+    ∂ᵧv₀ = @inline (x, y) -> 0.0
+    z₀ = @inline x -> sinpi(x)
+    r₀ = @inline x -> 0.0
 
     return PDEInputData(
         (0.0, ymin),
         (1.0, 1.0),
         1.0,
         q₁, q₂, q₃, q₄,
-        ScalarFunction1D(α), ScalarFunction1D(f), ScalarFunction1D(df),
-        ScalarFunction2D(g), ScalarFunction2D(∂ₛg),
-        ScalarFunction2D(u₀), ScalarFunction2D(∂ₓu₀), ScalarFunction2D(∂ᵧu₀),
-        ScalarFunction2D(v₀), ScalarFunction2D(∂ₓv₀), ScalarFunction2D(∂ᵧv₀),
-        ScalarFunction1D(z₀), ScalarFunction1D(r₀),
-        ScalarFunction3D(f₁), ScalarFunction2D(f₂),
-        nothing,
-        nothing,
-        nothing,
-        nothing
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        nothing, nothing, nothing, nothing
     )
 end
