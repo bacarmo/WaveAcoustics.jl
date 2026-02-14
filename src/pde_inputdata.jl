@@ -3,69 +3,69 @@
 
 Input data configuration for coupled wave-acoustic PDE system.
 
-## Mathematical Specification
+# Mathematical Model
 
-Wave equation on rectangular domain ``Ω = ]x_{min},x_{max}[ × ]y_{min},y_{max}[``:
+Wave equation on rectangular domain Ω = ]xₘᵢₙ, xₘₐₓ[ × ]yₘᵢₙ, yₘₐₓ[:
 ```math
 \\frac{∂²u}{∂t²}(x,y,t) - α(t)Δu(x,y,t) + f(u(x,y,t)) = f₁(x,y,t)
 ```
 
 with homogeneous boundary conditions on Γ₀ = ∂Ω \\ Γ₁.
 
-Acoustic equation on bottom boundary ``Γ₁ = {(x,y_{min}) : x ∈ ]x_{min},x_{max}[}``:
+Acoustic equation on bottom boundary Γ₁ = {(x, yₘᵢₙ) : x ∈ ]xₘᵢₙ, xₘₐₓ[}:
 ```math
-q₁\\frac{∂²z}{∂t²}(x,t) + q₂\\frac{∂z}{∂t}(x,t) + q₃z(x,t) + q₄\\frac{∂u}{∂t}(x,y_{min},t) = f₂(x,t)
+q₁\\frac{∂²z}{∂t²}(x,t) + q₂\\frac{∂z}{∂t}(x,t) + q₃z(x,t) + q₄\\frac{∂u}{∂t}(x,yₘᵢₙ,t) = f₂(x,t)
 ```
 
-with 
+Coupling condition at Γ₁:
 ```math
-\\frac{\\partial u}{\\partial y}(x,y_{min},t)
+\\frac{\\partial u}{\\partial y}(x,yₘᵢₙ,t)
 = \\frac{\\partial z}{\\partial t}(x,t) 
-- g\\left(x, \\frac{\\partial u}{\\partial t}(x,y_{min},t)\\right)
+- g\\left(x, \\frac{\\partial u}{\\partial t}(x,yₘᵢₙ,t)\\right)
 ```
 
-and initial conditions:
+Initial conditions:
 ```math
 \\begin{aligned}
 & u(x,y,0) = u_0(x,y), \\quad \\frac{\\partial u}{\\partial t}(x,y,0) = v_0(x,y), \\quad (x,y) \\in \\Omega,
 \\\\
-& z(x,0) = z_0(x), \\quad \\frac{\\partial z}{\\partial t}(x,0) = r_0(x), \\quad x \\in ]x_{min},x_{max}[.
+& z(x,0) = z_0(x), \\quad \\frac{\\partial z}{\\partial t}(x,0) = r_0(x), \\quad x \\in ]xₘᵢₙ, xₘₐₓ[.
 \\end{aligned}
 ```
 
-## Fields
+# Fields
 
-### Domain Configuration
-- `pmin::NTuple{2,Float64}`: Bottom-left corner (xmin, ymin)
-- `pmax::NTuple{2,Float64}`: Top-right corner (xmax, ymax)
+## Domain Configuration
+- `pmin::NTuple{2,Float64}`: Bottom-left corner (xₘᵢₙ, yₘᵢₙ)
+- `pmax::NTuple{2,Float64}`: Top-right corner (xₘₐₓ, yₘₐₓ)
 - `t_final::Float64`: Final simulation time
 
-### Physical Parameters
+## Physical Parameters
 - `q₁::Float64`: Acoustic acceleration coefficient
 - `q₂::Float64`: Acoustic velocity coefficient
 - `q₃::Float64`: Acoustic displacement coefficient
 - `q₄::Float64`: Wave-acoustic coupling strength
 
-### Coefficient Functions
+## Coefficient Functions
 - `α::Tα`: Time-dependent wave diffusion coefficient α(t)
 - `f::Tf`, `df::Tdf`: Nonlinear wave term f(s) and derivative f'(s)
 - `g::Tg`, `∂ₛg::T∂ₛg`: Nonlinear coupling g(x,s) and s-derivative ∂ₛg(x,s)
 
-### Wave Initial Conditions (2D functions on Ω)
+## Wave Initial Conditions (2D functions on Ω)
 - `u₀::Tu₀`: Displacement u(x,y,0)
 - `∂ₓu₀::T∂ₓu₀`, `∂ᵧu₀::T∂ᵧu₀`: Spatial derivatives of displacement
 - `v₀::Tv₀`: Velocity v(x,y,0) = ∂ₜu(x,y,0)
 - `∂ₓv₀::T∂ₓv₀`, `∂ᵧv₀::T∂ᵧv₀`: Spatial derivatives of velocity
 
-### Acoustic Initial Conditions (1D functions on Γ₁)
+## Acoustic Initial Conditions (1D functions on Γ₁)
 - `z₀::Tz₀`: Acoustic displacement z(x,0)
 - `r₀::Tr₀`: Acoustic velocity r(x,0) = ∂ₜz(x,0)
 
-### Source Terms
+## Source Terms
 - `f₁::Tf₁`: Wave source term f₁(x,y,t) on Ω
 - `f₂::Tf₂`: Acoustic source term f₂(x,t) on Γ₁
 
-### Analytical Solutions
+## Analytical Solutions
 For manufactured solution cases, provide analytical solutions for convergence studies:
 - `u::Tu`, `v::Tv`: Analytical wave solutions u(x,y,t), v(x,y,t)
 - `z::Tz`, `r::Tr`: Analytical acoustic solutions z(x,t), r(x,t)
@@ -132,9 +132,11 @@ Wave solution: ``u(x,y,t) = (x^a-x)(y^a-1)(4+t^2)``.
 Acoustic solution obtained by integrating 
 ``z'(x,t) = -u_y(x,y_{min},t) + g(x,u'(x,y_{min},t))``.
 
-
 # Arguments
 - `a::Float64=2.4`: Smoothness parameter controlling solution regularity.
+
+# Returns
+`PDEInputData` with analytical solutions for convergence study.
 """
 function example1_manufactured(a::Float64 = 2.4)
     # Precompute exponent-related constants
@@ -261,13 +263,14 @@ end
 """
     example1_zero_source(a::Float64=2.4) -> PDEInputData
 
-Construct Example 1 physical simulation variant with zero source terms.
-
-This version omits the manufactured source terms (f₁ = f₂ = 0).
-No analytical solution is available for this configuration.
+Same configuration as `example1_manufactured` but with f₁ = f₂ = 0.
+No analytical solution available.
 
 # Arguments
 - `a::Float64=2.4`: Smoothness parameter for initial conditions.
+
+# Returns
+`PDEInputData` with analytical solutions set to `nothing`.
 """
 function example1_zero_source(a::Float64 = 2.4)
     # Precompute exponent-related constants
@@ -348,6 +351,9 @@ Acoustic solution obtained by integrating
 
 # Arguments
 - `a::Float64=2.4`: Smoothness parameter controlling solution regularity
+
+# Returns
+`PDEInputData` with analytical solutions for convergence study.
 """
 function example2_manufactured(a::Float64 = 2.4)
     # Precompute exponent-related constants
@@ -466,13 +472,14 @@ end
 """
     example2_zero_source(a::Float64=2.4) -> PDEInputData
 
-Construct Example 2 physical simulation variant with zero source terms.
-
-This version omits the manufactured source terms (f₁ = f₂ = 0).
-No analytical solution is available for this configuration.
+Same configuration as `example2_manufactured` but with f₁ = f₂ = 0.
+No analytical solution available.
 
 # Arguments
-- `a::Float64=2.4`: Smoothness parameter for initial conditions
+- `a::Float64=2.4`: Smoothness parameter for initial conditions.
+
+# Returns
+`PDEInputData` with analytical solutions set to `nothing`.
 """
 function example2_zero_source(a::Float64 = 2.4)
     # Precompute exponent-related constants
