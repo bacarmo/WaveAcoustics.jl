@@ -1,4 +1,3 @@
-# Model
 ## Strong Formulation
 We seek functions ``u`` and ``z`` satisfying the following system of equations:
 ```math
@@ -39,8 +38,9 @@ with initial conditions
 ```
 where ``\Omega`` is a bounded open subset of ``\mathbb{R}^n``, ``n\geq 2``, with smooth boundary ``\Gamma=\Gamma_0\cup\Gamma_1`` and disjoint ``\Gamma_0``, ``\Gamma_1``.
 
+Existence and uniqueness results for particular cases of \eqref{pde:mdl}–\eqref{pde:mdl:initial_condition} can be found in:
 
-Existence and uniqueness results for particular cases of \eqref{pde:mdl}-\eqref{pde:mdl:initial_condition} can be found in Alcântara et al. (2025) "Numerical analysis for nonlinear wave equations with boundary conditions: Dirichlet, Acoustics and Impenetrability", *Applied Mathematics and Computation*, 484, 129009, [https://doi.org/10.1016/j.amc.2024.129009](https://doi.org/10.1016/j.amc.2024.129009).
+> Alcântara et al. (2025). Numerical analysis for nonlinear wave equations with boundary conditions: Dirichlet, Acoustics and Impenetrability. *Applied Mathematics and Computation*. [https://doi.org/10.1016/j.amc.2024.129009](https://doi.org/10.1016/j.amc.2024.129009)
 
 ## Weak Formulation
 We seek functions $u(t)\in H_{\Gamma_0}^1(\Omega)$ and $z(t)\in L^2(\Gamma_1)$ such that
@@ -72,17 +72,6 @@ $u^\prime(0)=v_0$,
 $z(0)=z_0$, and 
 $z^\prime(0) = r_0 \equiv \frac{\partial u_0}{\partial\nu} + g(v_0)$. 
 
-
-We consider 
-``H_{\Gamma_0}^1(\Omega) = \{ v \in H^1(\Omega);\, v|_{\Gamma_0} = 0 \}`` 
-and the inner products and norms in ``L^2(\Omega)`` and ``L^2(\Gamma_1)`` by
-```math
-(\cdot, \cdot),\quad
-(\cdot, \cdot)_{\Gamma_1},\quad
-\|\cdot\|,\quad
-\|\cdot\|_{\Gamma_1}.
-```
-
 By introducing the auxiliary variables ``v(t)=u^\prime(t)`` and ``r(t)=z^\prime(t)``, we obtain the equivalent first-order system: find functions ``u(t),v(t)\in H_{\Gamma_0}^1(\Omega)`` and ``z(t),r(t)\in L^2(\Gamma_1)`` such that
 ```math
 \begin{align}
@@ -113,3 +102,14 @@ with initial conditions
 ``v(0)=v_0``, 
 ``z(0)=z_0``, and 
 ``r(0) = r_0 \equiv \frac{\partial u_0}{\partial\nu} + g(v_0)``.
+
+!!! details "Notation: Functional spaces, inner products, and norms"
+    We consider 
+    ``H_{\Gamma_0}^1(\Omega) = \{ v \in H^1(\Omega);\, v|_{\Gamma_0} = 0 \}`` 
+    and the inner products and norms in ``L^2(\Omega)`` and ``L^2(\Gamma_1)`` by
+    ```math
+    (\cdot, \cdot),\quad
+    (\cdot, \cdot)_{\Gamma_1},\quad
+    \|\cdot\|,\quad
+    \|\cdot\|_{\Gamma_1}.
+    ```
