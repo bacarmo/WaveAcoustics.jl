@@ -3,7 +3,7 @@
 # ============================================================================
 
 """
-    basis_functions(::Lagrange{1,1}, ξ)
+    basis_functions(::LagrangeElement{1,1}, ξ)
 
 Linear Lagrange basis functions on the reference interval [-1, 1].
 
@@ -18,7 +18,7 @@ Linear Lagrange basis functions on the reference interval [-1, 1].
 1 --- 2
 ```
 """
-@inline function basis_functions(::Lagrange{1, 1}, ξ::T) where {T <: Real}
+@inline function basis_functions(::LagrangeElement{1, 1}, ξ::T) where {T <: Real}
     half = T(0.5)
     SVector(
         half * (1 - ξ),
@@ -27,7 +27,7 @@ Linear Lagrange basis functions on the reference interval [-1, 1].
 end
 
 """
-    basis_functions_derivatives(::Lagrange{1,1}, ξ)
+    basis_functions_derivatives(::LagrangeElement{1,1}, ξ)
 
 Derivatives of linear Lagrange basis functions with respect to ξ.
 
@@ -38,13 +38,14 @@ Derivatives of linear Lagrange basis functions with respect to ξ.
 - `SVector{2,T}`: Derivatives [dϕ₁/dξ, dϕ₂/dξ]
 
 """
-@inline function basis_functions_derivatives(::Lagrange{1, 1}, ξ::T) where {T <: Real}
+@inline function basis_functions_derivatives(
+        ::LagrangeElement{1, 1}, ξ::T) where {T <: Real}
     half = T(0.5)
     SVector(-half, half)
 end
 
 """
-    basis_functions(::Lagrange{1,2}, ξ)
+    basis_functions(::LagrangeElement{1,2}, ξ)
 
 Quadratic Lagrange basis functions on the reference interval [-1, 1].
 
@@ -59,7 +60,7 @@ Quadratic Lagrange basis functions on the reference interval [-1, 1].
 1 --- 2 --- 3
 ```
 """
-@inline function basis_functions(::Lagrange{1, 2}, ξ::T) where {T <: Real}
+@inline function basis_functions(::LagrangeElement{1, 2}, ξ::T) where {T <: Real}
     half = T(0.5)
     SVector(
         half * ξ * (ξ - 1),
@@ -69,7 +70,7 @@ Quadratic Lagrange basis functions on the reference interval [-1, 1].
 end
 
 """
-    basis_functions_derivatives(::Lagrange{1,2}, ξ)
+    basis_functions_derivatives(::LagrangeElement{1,2}, ξ)
 
 Derivatives of quadratic Lagrange basis functions with respect to ξ.
 
@@ -79,7 +80,8 @@ Derivatives of quadratic Lagrange basis functions with respect to ξ.
 # Returns
 - `SVector{3,T}`: Derivatives [dϕ₁/dξ, dϕ₂/dξ, dϕ₃/dξ]
 """
-@inline function basis_functions_derivatives(::Lagrange{1, 2}, ξ::T) where {T <: Real}
+@inline function basis_functions_derivatives(
+        ::LagrangeElement{1, 2}, ξ::T) where {T <: Real}
     half = T(0.5)
     SVector(
         ξ - half,
@@ -89,7 +91,7 @@ Derivatives of quadratic Lagrange basis functions with respect to ξ.
 end
 
 """
-    basis_functions(::Lagrange{1,3}, ξ)
+    basis_functions(::LagrangeElement{1,3}, ξ)
 
 Cubic Lagrange basis functions on the reference interval [-1, 1].
 
@@ -104,7 +106,7 @@ Cubic Lagrange basis functions on the reference interval [-1, 1].
 1 --- 2 --- 3 --- 4
 ```
 """
-@inline function basis_functions(::Lagrange{1, 3}, ξ::T) where {T <: Real}
+@inline function basis_functions(::LagrangeElement{1, 3}, ξ::T) where {T <: Real}
     c = T(0.0625)
     SVector(
         c * (3 * ξ + 1) * (3 * ξ - 1) * (1 - ξ),
@@ -115,7 +117,7 @@ Cubic Lagrange basis functions on the reference interval [-1, 1].
 end
 
 """
-    basis_functions_derivatives(::Lagrange{1,3}, ξ)
+    basis_functions_derivatives(::LagrangeElement{1,3}, ξ)
 
 Derivatives of cubic Lagrange basis functions with respect to ξ.
 
@@ -125,7 +127,8 @@ Derivatives of cubic Lagrange basis functions with respect to ξ.
 # Returns
 - `SVector{4,T}`: Derivatives [dϕ₁/dξ, dϕ₂/dξ, dϕ₃/dξ, dϕ₄/dξ]
 """
-@inline function basis_functions_derivatives(::Lagrange{1, 3}, ξ::T) where {T <: Real}
+@inline function basis_functions_derivatives(
+        ::LagrangeElement{1, 3}, ξ::T) where {T <: Real}
     c = T(0.0625)
     SVector(
         c * (ξ * (18 - 27 * ξ) + 1),
@@ -140,7 +143,7 @@ end
 # ============================================================================
 
 """
-    basis_functions(::Lagrange{2,Deg}, ξ, η)
+    basis_functions(::LagrangeElement{2,Deg}, ξ, η)
 
 Tensor-product Lagrange basis functions on the reference square [-1,1] × [-1,1].
 
@@ -168,9 +171,9 @@ Tensor-product Lagrange basis functions on the reference square [-1,1] × [-1,1]
 ```
 """
 @inline function basis_functions(
-        ::Lagrange{2, Deg}, ξ::T, η::T) where {Deg, T <: Real}
-    φξ = basis_functions(Lagrange{1, Deg}(), ξ)
-    φη = basis_functions(Lagrange{1, Deg}(), η)
+        ::LagrangeElement{2, Deg}, ξ::T, η::T) where {Deg, T <: Real}
+    φξ = basis_functions(LagrangeElement{1, Deg}(), ξ)
+    φη = basis_functions(LagrangeElement{1, Deg}(), η)
 
     N = Deg + 1
     num_local_dof = N * N
@@ -183,7 +186,7 @@ Tensor-product Lagrange basis functions on the reference square [-1,1] × [-1,1]
 end
 
 """
-    basis_functions_derivatives(::Lagrange{2,Deg}, ξ, η)
+    basis_functions_derivatives(::LagrangeElement{2,Deg}, ξ, η)
 
 Derivatives of tensor-product Lagrange basis functions.
 
@@ -197,11 +200,11 @@ Derivatives of tensor-product Lagrange basis functions.
   - `∂ϕ/∂η::SVector{(Deg+1)²,T}`: Derivatives ∂ϕᵢ/∂η
 """
 @inline function basis_functions_derivatives(
-        ::Lagrange{2, Deg}, ξ::T, η::T) where {Deg, T <: Real}
-    ϕξ = basis_functions(Lagrange{1, Deg}(), ξ)
-    ϕη = basis_functions(Lagrange{1, Deg}(), η)
-    dϕξ = basis_functions_derivatives(Lagrange{1, Deg}(), ξ)
-    dϕη = basis_functions_derivatives(Lagrange{1, Deg}(), η)
+        ::LagrangeElement{2, Deg}, ξ::T, η::T) where {Deg, T <: Real}
+    ϕξ = basis_functions(LagrangeElement{1, Deg}(), ξ)
+    ϕη = basis_functions(LagrangeElement{1, Deg}(), η)
+    dϕξ = basis_functions_derivatives(LagrangeElement{1, Deg}(), ξ)
+    dϕη = basis_functions_derivatives(LagrangeElement{1, Deg}(), η)
 
     N = Deg + 1
     num_local_dof = N * N
@@ -226,7 +229,7 @@ end
 # ============================================================================
 
 """
-    basis_functions(::Hermite{1,3}, ξ)
+    basis_functions(::HermiteElement{1,3}, ξ)
 
 Cubic Hermite basis functions on the reference interval [-1, 1].
 
@@ -242,7 +245,7 @@ Cubic Hermite basis functions on the reference interval [-1, 1].
 ```
 Each node has 2 DOFs: (u, du/dξ)
 """
-@inline function basis_functions(::Hermite{1, 3}, ξ::T) where {T <: Real}
+@inline function basis_functions(::HermiteElement{1, 3}, ξ::T) where {T <: Real}
     quarter = T(0.25)
     SVector(
         (2 + ξ) * (1 - ξ)^2 * quarter,
@@ -253,7 +256,7 @@ Each node has 2 DOFs: (u, du/dξ)
 end
 
 """
-    basis_functions_derivatives(::Hermite{1,3}, ξ)
+    basis_functions_derivatives(::HermiteElement{1,3}, ξ)
 
 Derivatives of cubic Hermite basis functions with respect to ξ.
 
@@ -263,7 +266,7 @@ Derivatives of cubic Hermite basis functions with respect to ξ.
 # Returns
 - `SVector{4,T}`: Derivatives [dH₁/dξ, dH₁'/dξ, dH₂/dξ, dH₂'/dξ]
 """
-@inline function basis_functions_derivatives(::Hermite{1, 3}, ξ::T) where {T <: Real}
+@inline function basis_functions_derivatives(::HermiteElement{1, 3}, ξ::T) where {T <: Real}
     quarter = T(0.25)
     SVector(
         3 * (-1 + ξ) * (1 + ξ) * quarter,
@@ -278,7 +281,7 @@ end
 # ============================================================================
 
 """
-    basis_functions(::Hermite{2,3}, ξ, η)
+    basis_functions(::HermiteElement{2,3}, ξ, η)
 
 Bicubic Hermite basis functions on the reference square [-1,1] × [-1,1].
 
@@ -298,9 +301,9 @@ Bicubic Hermite basis functions on the reference square [-1,1] × [-1,1].
 ```
 Each corner node has 4 DOFs: (u, ∂u/∂ξ, ∂u/∂η, ∂²u/∂ξ∂η)
 """
-@inline function basis_functions(::Hermite{2, 3}, ξ::T, η::T) where {T <: Real}
-    ϕξ = basis_functions(Hermite{1, 3}(), ξ) # [H₁(ξ), H₁'(ξ), H₂(ξ), H₂'(ξ)]
-    ϕη = basis_functions(Hermite{1, 3}(), η) # [H₁(η), H₁'(η), H₂(η), H₂'(η)]
+@inline function basis_functions(::HermiteElement{2, 3}, ξ::T, η::T) where {T <: Real}
+    ϕξ = basis_functions(HermiteElement{1, 3}(), ξ) # [H₁(ξ), H₁'(ξ), H₂(ξ), H₂'(ξ)]
+    ϕη = basis_functions(HermiteElement{1, 3}(), η) # [H₁(η), H₁'(η), H₂(η), H₂'(η)]
 
     ϕ = SVector{16}(
         # NODE 1: (ξ,η) = (-1,-1)
@@ -332,7 +335,7 @@ Each corner node has 4 DOFs: (u, ∂u/∂ξ, ∂u/∂η, ∂²u/∂ξ∂η)
 end
 
 """
-    basis_functions_derivatives(::Hermite{2,3}, ξ, η)
+    basis_functions_derivatives(::HermiteElement{2,3}, ξ, η)
 
 Derivatives of Bicubic Hermite basis functions.
 
@@ -345,12 +348,13 @@ Derivatives of Bicubic Hermite basis functions.
   - `∂ϕ/∂ξ::SVector{16,T}`: Derivatives ∂ϕᵢ/∂ξ
   - `∂ϕ/∂η::SVector{16,T}`: Derivatives ∂ϕᵢ/∂η
 """
-@inline function basis_functions_derivatives(::Hermite{2, 3}, ξ::T, η::T) where {T <: Real}
-    ϕξ = basis_functions(Hermite{1, 3}(), ξ)
-    ϕη = basis_functions(Hermite{1, 3}(), η)
+@inline function basis_functions_derivatives(
+        ::HermiteElement{2, 3}, ξ::T, η::T) where {T <: Real}
+    ϕξ = basis_functions(HermiteElement{1, 3}(), ξ)
+    ϕη = basis_functions(HermiteElement{1, 3}(), η)
 
-    dϕξ = basis_functions_derivatives(Hermite{1, 3}(), ξ)
-    dϕη = basis_functions_derivatives(Hermite{1, 3}(), η)
+    dϕξ = basis_functions_derivatives(HermiteElement{1, 3}(), ξ)
+    dϕη = basis_functions_derivatives(HermiteElement{1, 3}(), η)
 
     ∂ϕ_∂ξ = SVector{16}(
         # NODE 1: (ξ,η) = (-1,-1)

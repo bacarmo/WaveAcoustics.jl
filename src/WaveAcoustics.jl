@@ -1,38 +1,30 @@
 module WaveAcoustics
 
-using StaticArrays: SVector, SMatrix, @SVector, @SMatrix
+using StaticArrays: SVector, SMatrix
 using GaussQuadrature: legendre
 using Printf: @printf
-using SparseArrays: sparse, spzeros, SparseMatrixCSC
-using LinearAlgebra: Symmetric, lmul!, cholesky, ldiv!, mul!
-using FixedSizeArrays: FixedSizeArray
+using SparseArrays: sparse, spzeros, SparseMatrixCSC, nnz, nzrange
+using LinearAlgebra: Symmetric, lmul!, cholesky, ldiv!, mul!, dot
+import LinearSolve as LS
 
 # Exports
-export PDECommonData, PDEInputData
-export manufactured_solution_case, zero_source_case
-export example1_manufactured, example1_zero_source
-export example2_manufactured, example2_zero_source
+export PDEInputData, example1_manufactured, example1_zero_source, example2_manufactured,
+       example2_zero_source
 export Lagrange, Hermite
-export pde_solve, CrankNicolson, CrankNicolsonLinearized, ConvergenceStudy, SolutionHistory,
-       EnergyHistory
-export convergence_test_coupled, convergence_test_spatial, convergence_test_temporal,
+export FEMState, L2ErrorCallback, SolutionCallback
+export CrankNicolson1
+export pde_solve
+export convergence_study_coupled, convergence_study_spatial, convergence_study_temporal,
        print_convergence_table
 
 # Includes
-include("fe_families.jl")
-include("boundary_conditions.jl")
-include("basis_functions.jl")
-include("mesh.jl")
-include("dof_map.jl")
-include("quadrature_setup.jl")
-include("assembly_local_matrices.jl")
-include("assembly_global_matrices.jl")
-include("assembly_global_vectors.jl")
 include("pde_inputdata.jl")
+include("mesh/mesh.jl")
+include("fem/fem.jl")
+include("callbacks/callbacks.jl")
+include("assembly/assembly.jl")
 include("initial_solution.jl")
-include("error_norms.jl")
-include("pde_solve.jl")
-include("crank_nicolson.jl")
-include("crank_nicolson_linearized.jl")
-include("convergence_test.jl")
+include("ode_solvers/ode_solvers.jl")
+include("pde.solve.jl")
+include("postprocessing/postprocessing.jl")
 end

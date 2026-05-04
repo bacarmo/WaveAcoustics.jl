@@ -1,11 +1,10 @@
-
 """
     DOFMap{T <: AbstractVector, I <: Integer}
 
 Local-to-global DOF mapping with homogeneous Dirichlet BCs enforced on the FE approximation subspace.
 
 # Fields
-- `EQoLG::T`: Element connectivity. `EQoLG[e][a]` gives global index of local DOF `a` in element `e`
+- `EQoLG`: Element connectivity array. `EQoLG[e][a]` gives the global free-DOF index of local DOF `a` in element `e`, or the sentinel value `m+1` if that DOF is constrained.
 - `m::I`: Number of free DOFs after homogeneous Dirichlet BC enforcement on the FE approximation subspace
 
 # Indexing Convention
@@ -18,23 +17,25 @@ struct DOFMap{T <: AbstractVector, I <: Integer}
 end
 
 """
-    DOFMap(mesh::CartesianMesh, family::FEFamily, sides::DirichletSides)
+    DOFMap(mesh::CartesianMesh, family::DimensionalFEFamily, sides::DirichletSides)
 
 Construct DOF map for given mesh, element family, and Dirichlet boundary conditions.
 
 # Arguments
-- `mesh`: Cartesian mesh
-- `family`: Finite element family (e.g., `Lagrange{2,3}()`)
-- `sides`: Dirichlet boundary condition specification (e.g., `LeftRight()`)
+- `mesh::CartesianMesh`: Cartesian mesh
+- `family::DimensionalFEFamily`: Finite element family (e.g., `LagrangeElement{2,3}()`)
+- `sides::DirichletSides`: Dirichlet boundary condition specification (e.g., `LeftRight()`)
 
 # Returns
 `DOFMap` containing element connectivity and number of free DOFs.
 
 # Examples
 ```jldoctest
-julia> mesh = WaveAcoustics.CartesianMesh((0.0,), (1.0,), (4,));
+julia> using WaveAcoustics: DOFMap, CartesianMesh, LagrangeElement, LeftRight
 
-julia> dofmap = WaveAcoustics.DOFMap(mesh, WaveAcoustics.Lagrange{1,1}(), WaveAcoustics.LeftRight());
+julia> mesh = CartesianMesh((0.0,), (1.0,), (4,));
+
+julia> dofmap = DOFMap(mesh, LagrangeElement{1,1}(), LeftRight());
 
 julia> dofmap.EQoLG
 4-element Vector{StaticArraysCore.SVector{2, Int64}}:
@@ -47,7 +48,7 @@ julia> dofmap.m
 3
 ```
 """
-function DOFMap(mesh::CartesianMesh{Dim, I}, family::FEFamily,
+function DOFMap(mesh::CartesianMesh{Dim, I}, family::DimensionalFEFamily,
         sides::DirichletSides) where {Dim, I <: Integer}
     LG = build_LG(mesh, family)
     EQ, m = build_EQ(mesh.Nx, family, sides)
@@ -75,7 +76,8 @@ Uses tensor product ordering: DOFs numbered left-to-right, bottom-to-top.
 """
 function build_LG end
 
-function build_LG(mesh::CartesianMesh{1, I}, ::Lagrange{1, Deg}) where {I <: Integer, Deg}
+function build_LG(
+        mesh::CartesianMesh{1, I}, ::LagrangeElement{1, Deg}) where {I <: Integer, Deg}
     Ne = Int(mesh.Nx[1])
     num_local_dof = Deg + 1
     LG = Vector{SVector{num_local_dof, I}}(undef, Ne)
@@ -88,7 +90,8 @@ function build_LG(mesh::CartesianMesh{1, I}, ::Lagrange{1, Deg}) where {I <: Int
     return LG
 end
 
-function build_LG(mesh::CartesianMesh{2, I}, ::Lagrange{2, Deg}) where {I <: Integer, Deg}
+function build_LG(
+        mesh::CartesianMesh{2, I}, ::LagrangeElement{2, Deg}) where {I <: Integer, Deg}
     Nx, Ny = mesh.Nx
     nx = Deg * Int64(Nx) + 1  # Total DOFs in x-direction
     ny = Deg * Int64(Ny) + 1  # Total DOFs in y-direction
@@ -122,12 +125,12 @@ function build_LG(mesh::CartesianMesh{2, I}, ::Lagrange{2, Deg}) where {I <: Int
     return LG
 end
 
-function build_LG(mesh::CartesianMesh{1, I}, ::Hermite{1, 3}) where {I <: Integer}
-    error("build_LG not yet implemented for Hermite{1,3}")
+function build_LG(mesh::CartesianMesh{1, I}, ::HermiteElement{1, 3}) where {I <: Integer}
+    error("build_LG not yet implemented for HermiteElement{1,3}")
 end
 
-function build_LG(mesh::CartesianMesh{2, I}, ::Hermite{2, 3}) where {I <: Integer}
-    error("build_LG not yet implemented for Hermite{2,3}")
+function build_LG(mesh::CartesianMesh{2, I}, ::HermiteElement{2, 3}) where {I <: Integer}
+    error("build_LG not yet implemented for HermiteElement{2,3}")
 end
 
 """
@@ -146,10 +149,10 @@ Build equation numbering array that enforces homogeneous Dirichlet BCs.
 function build_EQ end
 
 function build_EQ(
-        Nx::NTuple{1, I}, ::Lagrange{1, Deg}, ::LeftRight) where {I <: Integer, Deg}
+        Nx::NTuple{1, I}, ::LagrangeElement{1, Deg}, ::LeftRight) where {I <: Integer, Deg}
     Ne = Int(Nx[1])
     num_dof = Deg * Ne + 1
-    m = convert(I, num_dof - 2)
+    m = I(num_dof - 2)
     sentinel = m + one(I)
 
     EQ = Vector{I}(undef, num_dof)
@@ -163,7 +166,7 @@ function build_EQ(
     return EQ, m
 end
 
-function build_EQ(Nx::NTuple{2, I}, ::Lagrange{2, Deg},
+function build_EQ(Nx::NTuple{2, I}, ::LagrangeElement{2, Deg},
         ::LeftRightBottomTop) where {I <: Integer, Deg}
     nx = Deg * Int64(Nx[1]) + 1         # Total DOFs in x-direction
     ny = Deg * Int64(Nx[2]) + 1         # Total DOFs in y-direction
@@ -184,7 +187,7 @@ function build_EQ(Nx::NTuple{2, I}, ::Lagrange{2, Deg},
     return EQ, m
 end
 
-function build_EQ(Nx::NTuple{2, I}, ::Lagrange{2, Deg},
+function build_EQ(Nx::NTuple{2, I}, ::LagrangeElement{2, Deg},
         ::LeftRightTop) where {I <: Integer, Deg}
     nx = Deg * Int64(Nx[1]) + 1     # Total DOFs in x-direction
     ny = Deg * Int64(Nx[2]) + 1     # Total DOFs in y-direction
@@ -205,18 +208,19 @@ function build_EQ(Nx::NTuple{2, I}, ::Lagrange{2, Deg},
     return EQ, m
 end
 
-function build_EQ(Nx::NTuple{1, I}, ::Hermite{1, 3}, ::LeftRight) where {I <: Integer}
-    error("build_EQ not yet implemented for Hermite{1,3}")
+function build_EQ(
+        Nx::NTuple{1, I}, ::HermiteElement{1, 3}, ::LeftRight) where {I <: Integer}
+    error("build_EQ not yet implemented for HermiteElement{1,3}")
 end
 
-function build_EQ(Nx::NTuple{2, I}, ::Hermite{2, 3},
+function build_EQ(Nx::NTuple{2, I}, ::HermiteElement{2, 3},
         ::LeftRightBottomTop) where {I <: Integer}
-    error("build_EQ not yet implemented for Hermite{2,3} with LeftRightBottomTop")
+    error("build_EQ not yet implemented for HermiteElement{2,3} with LeftRightBottomTop")
 end
 
-function build_EQ(Nx::NTuple{2, I}, ::Hermite{2, 3},
+function build_EQ(Nx::NTuple{2, I}, ::HermiteElement{2, 3},
         ::LeftRightTop) where {I <: Integer}
-    error("build_EQ not yet implemented for Hermite{2,3} with LeftRightTop")
+    error("build_EQ not yet implemented for HermiteElement{2,3} with LeftRightTop")
 end
 
 """

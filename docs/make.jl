@@ -24,7 +24,7 @@ makedocs(;
             "Example 1" => "examples/example1.md",
             "Example 2" => "examples/example2.md"
         ],
-        "API Reference" => "api/api.md"
+        "API" => "api/api.md"
     ]
 )
 

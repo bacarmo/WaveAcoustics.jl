@@ -111,6 +111,73 @@ function assembly_global_matrix(
 end
 
 """
+    assembly_global_matrix(local_matrix, dof_map_i, dof_map_j) -> SparseMatrixCSC
+
+Assemble a global sparse FEM matrix from a single element-local matrix using two
+independent DOF maps (left/row and right/column). The assembly rule is:
+
+    A[i, j] += Aᵉ[a, b],  i = dof_map_i.EQoLG[e][a],  j = dof_map_j.EQoLG[e][b]
+
+Entries mapped to DOF indices exceeding `dof_map_i.m` or `dof_map_j.m` are discarded,
+effectively enforcing Dirichlet boundary conditions.
+
+# Arguments
+- `local_matrix::SMatrix{N,N,T}`: Element-local matrix of size N×N, shared across all elements.
+- `dof_map_i::DOFMap{<:AbstractVector, I}`: Row DOF mapping with `EQoLG` connectivity and `m` free DOFs
+- `dof_map_j::DOFMap{<:AbstractVector, Ti}`: Column DOF mapping with `EQoLG` connectivity and `m` free DOFs
+
+# Returns
+- `SparseMatrixCSC{T,Ti}`: Global assembled matrix of size `dof_map_i.m × dof_map_j.m`
+
+# Throws
+- `AssertionError` if `dof_map_i` and `dof_map_j` have different numbers of elements.
+"""
+function assembly_global_matrix(
+        local_matrix::SMatrix{N, N, T},
+        dof_map_i::DOFMap{<:AbstractVector, I},
+        dof_map_j::DOFMap{<:AbstractVector, I}
+) where {N, T, I <: Integer}
+    mᵢ = dof_map_i.m
+    mⱼ = dof_map_j.m
+    Neᵢ = length(dof_map_i.EQoLG)
+    Neⱼ = length(dof_map_j.EQoLG)
+    @assert Neᵢ==Neⱼ "DOF maps must have the same number of elements (got $Neᵢ vs $Neⱼ)"
+    Ne = Neᵢ
+
+    # Pre-allocate triplet arrays (row indices, column indices, values) for sparse assembly
+    capacity = Ne * N * N
+    I_rows = Vector{I}(undef, capacity)
+    J_cols = Vector{I}(undef, capacity)
+    V_vals = Vector{T}(undef, capacity)
+
+    idx = 0
+    @inbounds for e in 1:Ne
+        global_indices_i = dof_map_i.EQoLG[e]
+        global_indices_j = dof_map_j.EQoLG[e]
+        for b in 1:N
+            jb = global_indices_j[b]
+            jb > mⱼ && continue
+            for a in 1:N
+                ia = global_indices_i[a]
+                ia > mᵢ && continue
+
+                idx += 1
+                I_rows[idx] = ia
+                J_cols[idx] = jb
+                V_vals[idx] = local_matrix[a, b]
+            end
+        end
+    end
+
+    # Trim to actual number of entries and assemble sparse matrix
+    resize!(I_rows, idx)
+    resize!(J_cols, idx)
+    resize!(V_vals, idx)
+
+    return sparse(I_rows, J_cols, V_vals, mᵢ, mⱼ)
+end
+
+"""
     assembly_global_matrix_DG(scale, ∂ₛg, v, mesh, dof_map, quad)
 
 DGᵢⱼ = scale * ∫ ϕᵢ(x) * ϕⱼ(x) * ∂ₛg(x, Vₕ(x)) dx over Ω ⊂ ℜ, with Vₕ(x) = Σ v[k] ϕₖ(x).
@@ -145,7 +212,7 @@ function assembly_global_matrix_DG(
     I_rows = Vector{I}(undef, capacity)
     J_cols = Vector{I}(undef, capacity)
     V_vals = Vector{T}(undef, capacity)
-    local_matrix = FixedSizeArray{T}(undef, num_local_dof, num_local_dof)
+    local_matrix = zeros(T, num_local_dof, num_local_dof)
 
     scale_jacobian = scale * (Δx / 2)
 
@@ -219,7 +286,7 @@ function assembly_global_matrix_DF(
     I_rows = Vector{I}(undef, capacity)
     J_cols = Vector{I}(undef, capacity)
     V_vals = Vector{T}(undef, capacity)
-    local_matrix = FixedSizeArray{T}(undef, num_local_dof, num_local_dof)
+    local_matrix = zeros(T, num_local_dof, num_local_dof)
 
     scale_jacobian = scale * (mesh.Δx[1] * mesh.Δx[2] / 4)
 

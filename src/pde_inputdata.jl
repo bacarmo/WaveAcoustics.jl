@@ -1,44 +1,60 @@
 """
-    PDEInputData{Tα, Tf, Tdf, Tg, T∂ₛg, Tu₀, T∂ₓu₀, T∂ᵧu₀, Tv₀, T∂ₓv₀, T∂ᵧv₀, Tz₀, Tr₀, Tf₁, Tf₂, Tu, Tv, Tz, Tr}
+    PDEInputData{Tα, Tf, Tdf, Tg, T∂ₛg, 
+                 Tu₀, T∂ₓu₀, T∂ᵧu₀, 
+                 Tv₀, T∂ₓv₀, T∂ᵧv₀, 
+                 Tz₀, Tr₀, 
+                 Tf₁, Tf₂, 
+                 Tu, Tv, Tz, Tr}
 
-Input data configuration for coupled wave-acoustic PDE system.
+Input data for a coupled wave-acoustic PDE system on a rectangular domain
+``\\Omega = ]x_{\\min}, x_{\\max}[ \\times ]y_{\\min}, y_{\\max}[``,
+with acoustic interaction prescribed on the lower boundary
+``\\Gamma_1 = ]x_{\\min}, x_{\\max}[ \\times \\{y_{\\min}\\}``,
+where ``\\Gamma = \\partial\\Omega`` and ``\\Gamma_0 = \\Gamma \\setminus \\Gamma_1``.
 
 # Mathematical Model
-
-Wave equation on rectangular domain Ω = ]xₘᵢₙ, xₘₐₓ[ × ]yₘᵢₙ, yₘₐₓ[:
 ```math
-\\frac{∂²u}{∂t²}(x,y,t) - α(t)Δu(x,y,t) + f(u(x,y,t)) = f₁(x,y,t)
-```
-
-with homogeneous boundary conditions on Γ₀ = ∂Ω \\ Γ₁.
-
-Acoustic equation on bottom boundary Γ₁ = {(x, yₘᵢₙ) : x ∈ ]xₘᵢₙ, xₘₐₓ[}:
-```math
-q₁\\frac{∂²z}{∂t²}(x,t) + q₂\\frac{∂z}{∂t}(x,t) + q₃z(x,t) + q₄\\frac{∂u}{∂t}(x,yₘᵢₙ,t) = f₂(x,t)
-```
-
-Coupling condition at Γ₁:
-```math
-\\frac{\\partial u}{\\partial y}(x,yₘᵢₙ,t)
-= \\frac{\\partial z}{\\partial t}(x,t) 
-- g\\left(x, \\frac{\\partial u}{\\partial t}(x,yₘᵢₙ,t)\\right)
-```
-
-Initial conditions:
-```math
+\\begin{align*}
 \\begin{aligned}
-& u(x,y,0) = u_0(x,y), \\quad \\frac{\\partial u}{\\partial t}(x,y,0) = v_0(x,y), \\quad (x,y) \\in \\Omega,
-\\\\
-& z(x,0) = z_0(x), \\quad \\frac{\\partial z}{\\partial t}(x,0) = r_0(x), \\quad x \\in ]xₘᵢₙ, xₘₐₓ[.
+& u^{\\prime\\prime}(x,y,t) 
+- \\alpha(t)\\Delta u(x,y,t) 
++ f\\big(u(x,y,t)\\big) 
+= f_1(x,y,t),
+\\\\[5pt]
+& q_1 z^{\\prime\\prime}(x,t)
++ q_2 z^\\prime(x,t)
++ q_3 z(x,t)
++ q_4 u^\\prime(x,y_{min},t)
+= f_2(x,t),
+\\\\[5pt]
+& -\\frac{\\partial u}{\\partial y}(x,y_{min},t)
+= z^\\prime(x,t)
+- g\\big(x,u^\\prime(x,y_{min},t)\\big),
+\\quad(x,t)\\in]x_{min},x_{max}[\\times(0,+\\infty),
+\\\\[5pt]
+& u(x,y,t) = 0,\\quad (x,y,t)\\in\\Gamma_0\\times(0,+\\infty),
 \\end{aligned}
+\\end{align*}
+```
+with initial conditions
+```math
+\\begin{align*}
+\\begin{aligned}
+& u(x,y,0) = u_0(x,y),\\quad u^\\prime(x,y,0)=v_0(x,y),\\quad (x,y)\\in\\Omega,
+\\\\
+& z(x,0) = z_0(x),\\quad
+  z^\\prime(x,0) = r_0(x) \\equiv -\\frac{\\partial u_0}{\\partial y}(x,y_{\\min}) + g\\big(x,v_0(x,y_{\\min})\\big),\\quad x\\in]x_{\\min},y_{\\max}[.
+\\end{aligned}
+\\end{align*}
 ```
 
 # Fields
 
-## Domain Configuration
-- `pmin::NTuple{2,Float64}`: Bottom-left corner (xₘᵢₙ, yₘᵢₙ)
-- `pmax::NTuple{2,Float64}`: Top-right corner (xₘₐₓ, yₘₐₓ)
-- `t_final::Float64`: Final simulation time
+## Problem Identification
+- `name::String`: Identifier for the problem instance (e.g., "example1_manufactured(2.4)")
+## Domain Geometry
+- `pmin::NTuple{2,Float64}`: Bottom-left corner ``(x_{\\min}, y_{\\min})`` of ``Ω``.
+- `pmax::NTuple{2,Float64}`: Top-right corner ``(x_{\\max}, y_{\\max})`` of ``Ω``.
 
 ## Physical Parameters
 - `q₁::Float64`: Acoustic acceleration coefficient
@@ -79,10 +95,12 @@ struct PDEInputData{
     Tz₀, Tr₀,
     Tf₁, Tf₂,
     Tu, Tv, Tz, Tr}
-    # Domain configuration
+    # Problem Identification
+    name::String
+
+    # Domain geometry
     pmin::NTuple{2, Float64}
     pmax::NTuple{2, Float64}
-    t_final::Float64
 
     # Physical parameters
     q₁::Float64
@@ -126,17 +144,26 @@ end
 """
     example1_manufactured(a::Float64=2.4) -> PDEInputData
 
-Manufactured solution with oscillatory coupling ``g(x,s) = (1+e^{-x^2})(\\sin(s)+2s)``.
-
-Wave solution: ``u(x,y,t) = (x^a-x)(y^a-1)(4+t^2)``. 
-Acoustic solution obtained by integrating 
-``z'(x,t) = -u_y(x,y_{min},t) + g(x,u'(x,y_{min},t))``.
+Manufactured solution with
+``g(x, s) = (1 + e^{-x^2})(\\sin(s) + 2s)``:
+```math
+\\begin{alignat*}{2}
+& u(x,y,t)   &&= (x^a - x)(y^a - 1)(4 + t^2), \\\\
+& z(x,t)     &&= \\sin(\\pi x) + (1+e^{-x^2})
+                  \\left[\\frac{\\cos\\big(-2t(x^a-x)\\big)-1}{2(x^a-x)}
+                  - 2t^2(x^a-x)\\right],
+\\end{alignat*}
+```
+where the acoustic displacement ``z(x,t)`` is obtained by integrating
+```math
+\\frac{∂z}{∂t}(x,t) = -\\frac{∂u}{∂y}(x,y_{\\min},t) + g\\!\\left(x,\\,\\frac{∂u}{∂t}(x,y_{\\min},t)\\right).
+```
 
 # Arguments
 - `a::Float64=2.4`: Smoothness parameter controlling solution regularity.
 
 # Returns
-`PDEInputData` with analytical solutions for convergence study.
+`PDEInputData` with analytical solution for convergence study.
 """
 function example1_manufactured(a::Float64 = 2.4)
     # Precompute exponent-related constants
@@ -247,9 +274,9 @@ function example1_manufactured(a::Float64 = 2.4)
     r₀ = @inline x -> 0.0
 
     return PDEInputData(
+        "example1_manufactured($a)",
         (0.0, ymin),
         (1.0, 1.0),
-        1.0,
         q₁, q₂, q₃, q₄,
         α, f, df, g, ∂ₛg,
         u₀, ∂ₓu₀, ∂ᵧu₀,
@@ -324,9 +351,9 @@ function example1_zero_source(a::Float64 = 2.4)
     r₀ = @inline x -> 0.0
 
     return PDEInputData(
+        "example1_zero_source($a)",
         (0.0, ymin),
         (1.0, 1.0),
-        1.0,
         q₁, q₂, q₃, q₄,
         α, f, df, g, ∂ₛg,
         u₀, ∂ₓu₀, ∂ᵧu₀,
@@ -343,17 +370,23 @@ end
 """
     example2_manufactured(a::Float64=2.4) -> PDEInputData
 
-Manufactured solution with linear coupling ``g(x,s) = (1+e^{-x^2})s``.
-
-Wave solution: ``u(x,y,t) = (x^a-x)(y^a-1)(4+t^2)``. 
-Acoustic solution obtained by integrating 
-``z'(x,t) = -u_y(x,y_{min},t) + g(x,u'(x,y_{min},t))``.
+Manufactured solution with linear coupling ``g(x,s) = (1+e^{-x^2})s``:
+```math
+\\begin{alignat*}{2}
+& u(x,y,t)   &&= (x^a - x)(y^a - 1)(4 + t^2), \\\\
+& z(x,t)     &&= \\sin(\\pi x) - (1+e^{-x^2})(x^a-x)t^2,
+\\end{alignat*}
+```
+where the acoustic displacement ``z(x,t)`` is obtained by integrating
+```math
+\\frac{∂z}{∂t}(x,t) = -\\frac{∂u}{∂y}(x,y_{\\min},t) + g\\!\\left(x,\\,\\frac{∂u}{∂t}(x,y_{\\min},t)\\right).
+```
 
 # Arguments
-- `a::Float64=2.4`: Smoothness parameter controlling solution regularity
+- `a::Float64=2.4`: Smoothness parameter controlling solution regularity.
 
 # Returns
-`PDEInputData` with analytical solutions for convergence study.
+`PDEInputData` with analytical solution for convergence study.
 """
 function example2_manufactured(a::Float64 = 2.4)
     # Precompute exponent-related constants
@@ -456,9 +489,9 @@ function example2_manufactured(a::Float64 = 2.4)
     r₀ = @inline x -> 0.0
 
     return PDEInputData(
+        "example2_manufactured($a)",
         (0.0, ymin),
         (1.0, 1.0),
-        1.0,
         q₁, q₂, q₃, q₄,
         α, f, df, g, ∂ₛg,
         u₀, ∂ₓu₀, ∂ᵧu₀,
@@ -533,9 +566,9 @@ function example2_zero_source(a::Float64 = 2.4)
     r₀ = @inline x -> 0.0
 
     return PDEInputData(
+        "example2_zero_source($a)",
         (0.0, ymin),
         (1.0, 1.0),
-        1.0,
         q₁, q₂, q₃, q₄,
         α, f, df, g, ∂ₛg,
         u₀, ∂ₓu₀, ∂ᵧu₀,

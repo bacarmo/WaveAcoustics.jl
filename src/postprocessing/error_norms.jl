@@ -1,5 +1,5 @@
 """
-    L2_error_1d(u, uₕ_coefs, mesh, dof_map, quad)
+    L2_error(u, uₕ_coefs, mesh, dof_map, quad)
 
 Compute the L2 error norm ||u - uₕ||_L2 between exact and FEM solutions.
 
@@ -13,13 +13,13 @@ Compute the L2 error norm ||u - uₕ||_L2 between exact and FEM solutions.
 # Returns
 - `T`: L2 norm ||u - uₕ||_L2
 """
-function L2_error_1d(
+function L2_error(
         u::Fun,
         uₕ_coefs::AbstractVector{T},
-        mesh::CartesianMesh{1},
+        mesh::CartesianMesh{1, I},
         dof_map::DOFMap,
         quad::QuadratureSetup
-) where {T <: Real, Fun}
+) where {T <: Real, Fun, I <: Integer}
     EQoLG = dof_map.EQoLG
     m = dof_map.m
 
@@ -57,7 +57,7 @@ function L2_error_1d(
 end
 
 """
-    L2_error_2d(u, uₕ_coefs, mesh, dof_map, quad)
+    L2_error(u, uₕ_coefs, mesh, dof_map, quad)
 
 Compute the L2 error norm ||u - uₕ||_L2 between exact and FEM solutions.
 
@@ -71,13 +71,13 @@ Compute the L2 error norm ||u - uₕ||_L2 between exact and FEM solutions.
 # Returns
 - `T`: L2 norm ||u - uₕ||_L2
 """
-function L2_error_2d(
+function L2_error(
         u::Fun,
         uₕ_coefs::AbstractVector{T},
-        mesh::CartesianMesh{2},
+        mesh::CartesianMesh{2, I},
         dof_map::DOFMap,
         quad::QuadratureSetup
-) where {T <: Real, Fun}
+) where {T <: Real, Fun, I <: Integer}
     EQoLG = dof_map.EQoLG
     m = dof_map.m
 
