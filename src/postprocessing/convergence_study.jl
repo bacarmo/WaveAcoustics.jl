@@ -5,50 +5,50 @@
 """
     RefinementData{T}
 
-Per-field scalar data indexed by refinement level.
-
-Stores one value per solution field of the wave-acoustic system at each
-refinement level of a convergence study. Used for both L∞(L²) error norms and
-convergence rates.
+Store scalar quantities indexed by refinement level.
+Used to represent both error norms and convergence rates.
 
 ## Fields
-- `v`: Wave velocity 
-- `d`: Wave displacement
-- `r`: Acoustic velocity
-- `z`: Acoustic displacement
+- `v`: Wave velocity error: maxₙ ‖uₜ(tₙ)-Vⁿ‖_{L²(Ω)}
+- `u`: Wave displacement error: maxₙ ‖u(tₙ)-Uⁿ‖_{L²(Ω)}
+- `r`: Acoustic velocity error: maxₙ ‖zₜ(tₙ)-Rⁿ‖_{L²(Γ₁)}
+- `z`: Acoustic displacement error: maxₙ ‖z(tₙ)-Zⁿ‖_{L²(Γ₁)}
+- `v_u`: Combined wave error: maxₙ {‖uₜ(tₙ)-Vⁿ‖_{L²(Ω)} + ‖u(tₙ)-Uⁿ‖_{L²(Ω)}}
+- `r_z`: Combined Acoustic error: maxₙ {‖zₜ(tₙ)-Rⁿ‖_{L²(Γ₁)} + ‖z(tₙ)-Zⁿ‖_{L²(Γ₁)}}
+- `v_u_r_z`: Total combined error: maxₙ {‖uₜ(tₙ)-Vⁿ‖_{L²(Ω)} + ‖u(tₙ)-Uⁿ‖_{L²(Ω)} + ‖zₜ(tₙ)-Rⁿ‖_{L²(Γ₁)} + ‖z(tₙ)-Zⁿ‖_{L²(Γ₁)}}
 """
 struct RefinementData{T <: AbstractFloat}
     v::Vector{T}
-    d::Vector{T}
+    u::Vector{T}
     r::Vector{T}
     z::Vector{T}
+    v_u::Vector{T}
+    r_z::Vector{T}
+    v_u_r_z::Vector{T}
 end
 
 """
-    RefinementData{T}(n::Int)
+    RefinementData{T}(N::Int)
 
-Construct a `RefinementData{T}` with all vectors initialized to zero, with
-length `n` (number of refinement levels).
+Construct a `RefinementData{T}` with all vectors initialized to zero, with length `N` (number of refinement levels).
 """
-function RefinementData{T}(n::Int) where {T <: AbstractFloat}
-    RefinementData{T}(zeros(T, n), zeros(T, n), zeros(T, n), zeros(T, n))
+function RefinementData{T}(N::Int) where {T <: AbstractFloat}
+    RefinementData{T}(zeros(T, N), zeros(T, N), zeros(T, N), zeros(T, N),
+        zeros(T, N), zeros(T, N), zeros(T, N))
 end
 
 """
     ConvergenceResults{T}
 
-Output of a convergence study, storing discretization parameters,
-L∞(L²) error norms, and convergence rates for all solution fields.
+Store the outcome of a convergence study.
 
 ## Fields
 - `test_info`: Description of the convergence study
 - `Nx`: Mesh sizes per direction at each refinement level
 - `h`: Element diameters at each refinement level
 - `τ`: Time steps at each refinement level
-- `errors`: L∞(L²) error norms per field at each refinement level
-  (see [`RefinementData`](@ref))
-- `rates`: Convergence rates log₂(eᵢ₋₁/eᵢ) per field at each refinement level
-  (see [`RefinementData`](@ref))
+- `errors`: L∞(L²) error norms per field at each refinement level  (see [`RefinementData`](@ref))
+- `rates`: Convergence rates log₂(eᵢ₋₁/eᵢ) per field at each refinement level  (see [`RefinementData`](@ref))
 """
 struct ConvergenceResults{T <: AbstractFloat, I <: Integer}
     test_info::String
@@ -72,20 +72,18 @@ Refines spatial and temporal discretizations together.
 Convergence rates are computed as log₂(eᵢ₋₁/eᵢ) between successive levels.
 
 ## Keyword Arguments
-- `input_data::PDEInputData`: PDE configuration with manufactured solution
-  (default: `example1_manufactured()`)
+- `input_data::PDEInputData`: PDE configuration with manufactured solution (default: `example1_manufactured()`)
 - `solver::ODESolver`: Time integration scheme (default: `CrankNicolson1()`)
 - `fe::FEFamily`: Finite element family (default: `Lagrange{1}()`)
 - `t_end::Float64`: Final simulation time (default: `1.0`)
-- `Nx_exp_range::UnitRange{Int}`: Exponents for grid refinement
-  (default: `3:6` → Nx = 8, 16, 32, 64)
+- `Nx_exp_range::UnitRange{Int}`: Exponents for grid refinement (default: `3:6` → Nx = 8, 16, 32, 64)
 
 ## Returns
 [`ConvergenceResults`](@ref)
 
 ## Example
 ```julia
-results = convergence_study_coupled(solver = ModifiedCN())
+results = convergence_study_coupled(solver = CrankNicolson1())
 print_convergence_table(results)
 ```
 """
@@ -95,7 +93,7 @@ function convergence_study_coupled(;
         fe::FEFamily = Lagrange{1}(),
         t_end::Float64 = 1.0,
         Nx_exp_range::UnitRange{Int} = 3:6)
-    Nx_values = 2 .^ collect(Nx_exp_range)
+    Nx_values = 2 .^ Nx_exp_range
     h_values = [element_diameter(Nx, input_data.pmin, input_data.pmax)
                 for Nx in Nx_values]
     p = polynomial_degree(fe)
@@ -115,8 +113,7 @@ Spatial convergence study with fixed time step.
 Refines the mesh while holding τ constant to isolate spatial discretization error.
 
 ## Keyword Arguments
-- `input_data::PDEInputData`: PDE configuration with manufactured solution
-  (default: `example1_manufactured()`)
+- `input_data::PDEInputData`: PDE configuration with manufactured solution (default: `example1_manufactured()`)
 - `solver::ODESolver`: Time integration scheme (default: `CrankNicolson1()`)
 - `fe::FEFamily`: Finite element family (default: `Lagrange{1}()`)
 - `t_end::Float64`: Final simulation time (default: `1.0`)
@@ -158,13 +155,11 @@ Temporal convergence study with fixed spatial grid.
 Refines the time step while holding Nx constant to isolate temporal discretization error.
 
 ## Keyword Arguments
-- `input_data::PDEInputData`: PDE configuration with manufactured solution
-  (default: `example1_manufactured()`)
+- `input_data::PDEInputData`: PDE configuration with manufactured solution (default: `example1_manufactured()`)
 - `solver::ODESolver`: Time integration scheme (default: `CrankNicolson1()`)
 - `fe::FEFamily`: Finite element family (default: `Lagrange{1}()`)
 - `t_end::Float64`: Final simulation time (default: `1.0`)
-- `τ_exp_range::UnitRange{Int}`: Exponents for time step refinement
-  (default: `3:6` → τ = 2⁻³, …, 2⁻⁶)
+- `τ_exp_range::UnitRange{Int}`: Exponents for time step refinement (default: `3:6` → τ = 2⁻³, …, 2⁻⁶)
 - `Nx_fixed::Int`: Fixed mesh size per direction (default: `2^8`)
 
 ## Returns
@@ -209,29 +204,32 @@ print_convergence_table(results)
 ```
 """
 function print_convergence_table(results::ConvergenceResults)
-    sep = "="^110
+    W = 175
+    sep = "="^W
     println("\n", sep)
     println(results.test_info)
     println(sep)
-    @printf("  %5s  %7s  %7s  %10s  %6s  %10s  %6s  %10s  %6s  %10s  %6s\n",
+    @printf("%4s  %6s  %6s  %12s  %17s  %17s  %17s  %27s  %21s  %35s\n",
         "Nx", "log₂h", "log₂τ",
-        "L∞L²(v)", "rate",
-        "L∞L²(d)", "rate",
-        "L∞L²(r)", "rate",
-        "L∞L²(z)", "rate")
-    println("-"^110)
-
+        "maxₙ‖e_vⁿ‖",
+        "maxₙ‖e_uⁿ‖",
+        "maxₙ‖e_rⁿ‖",
+        "maxₙ‖e_zⁿ‖",
+        "maxₙ(‖e_vⁿ‖+‖e_uⁿ‖)",
+        "maxₙ(‖e_rⁿ‖+‖e_zⁿ‖)",
+        "maxₙ(‖e_vⁿ‖+‖e_uⁿ‖+‖e_rⁿ‖+‖e_zⁿ‖)")
+    println("-"^W)
     for i in eachindex(results.Nx)
-        @printf("  %5d  %7.2f  %7.2f  %10.2e  %6.3f  %10.2e  %6.3f  %10.2e  %6.3f  %10.2e  %6.3f\n",
-            results.Nx[i],
-            log2(results.h[i]),
-            log2(results.τ[i]),
+        @printf("%4d  %6.2f  %6.2f  %10.2e %6.3f  %10.2e %6.3f  %10.2e %6.3f  %10.2e %6.3f  %14.2e %6.3f  %14.2e %6.3f  %14.2e %6.3f\n",
+            results.Nx[i], log2(results.h[i]), log2(results.τ[i]),
             results.errors.v[i], results.rates.v[i],
-            results.errors.d[i], results.rates.d[i],
+            results.errors.u[i], results.rates.u[i],
             results.errors.r[i], results.rates.r[i],
-            results.errors.z[i], results.rates.z[i])
+            results.errors.z[i], results.rates.z[i],
+            results.errors.v_u[i], results.rates.v_u[i],
+            results.errors.r_z[i], results.rates.r_z[i],
+            results.errors.v_u_r_z[i], results.rates.v_u_r_z[i])
     end
-
     println(sep)
 end
 
@@ -284,9 +282,20 @@ function run_convergence_study(
         pde_solve((Nx_values[i], Nx_values[i]), fe, tspan, input_data, solver, cb)
 
         errors.v[i] = maximum(cb.v_errors)
-        errors.d[i] = maximum(cb.d_errors)
+        errors.u[i] = maximum(cb.d_errors)
         errors.r[i] = maximum(cb.r_errors)
         errors.z[i] = maximum(cb.z_errors)
+
+        errors.v_u[i] = maximum(
+            cb.v_errors[j] + cb.d_errors[j]
+        for j in eachindex(cb.v_errors))
+        errors.r_z[i] = maximum(
+            cb.r_errors[j] + cb.z_errors[j]
+        for j in eachindex(cb.r_errors))
+        errors.v_u_r_z[i] = maximum(
+            cb.v_errors[j] + cb.d_errors[j] + cb.r_errors[j] + cb.z_errors[j]
+        for j in eachindex(cb.v_errors)
+        )
     end
 
     compute_rates!(rates, errors)
@@ -298,16 +307,13 @@ end
     compute_rates!(rates, errors)
 
 Compute convergence rates in-place as log₂(eᵢ₋₁/eᵢ) for each field.
-
-The first entry of each rate vector remains zero since no previous refinement
-level is available. The `rates` argument must be pre-allocated with zeros of
-length equal to `errors` (as produced by [`RefinementData{T}(n)`](@ref)).
+The first entry of each rate vector remains zero since no previous refinement level is available.
 """
 function compute_rates!(
         rates::RefinementData{T}, errors::RefinementData{T}) where {T <: AbstractFloat}
     for (e, r) in zip(
-        (errors.v, errors.d, errors.r, errors.z),
-        (rates.v, rates.d, rates.r, rates.z))
+        (errors.v, errors.u, errors.r, errors.z, errors.v_u, errors.r_z, errors.v_u_r_z),
+        (rates.v, rates.u, rates.r, rates.z, rates.v_u, rates.r_z, rates.v_u_r_z))
         for i in 2:length(e)
             r[i] = log2(e[i - 1] / e[i])
         end
