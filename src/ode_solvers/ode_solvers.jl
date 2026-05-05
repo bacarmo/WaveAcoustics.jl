@@ -60,7 +60,7 @@ Allocate and return the solver-specific cache for the time integration.
 Dispatches on `solver` to construct the appropriate cache type.
 
 # Arguments
-- `solver::ODESolver`: time integration scheme (e.g. `ModifiedCN()`).
+- `solver::ODESolver`: time integration scheme (e.g. `CrankNicolson1()`).
 - `matrices::SystemMatrices{T,I}`: global FEM matrices.
  
 # Extended help
