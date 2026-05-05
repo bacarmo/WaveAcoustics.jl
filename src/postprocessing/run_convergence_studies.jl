@@ -68,7 +68,13 @@ const CASES = (
     (input_data = example1_manufactured(3.4 ), solver = CrankNicolson1(), fe = Lagrange{2}()),
     (input_data = example1_manufactured(3.51), solver = CrankNicolson1(), fe = Lagrange{3}()),
     (input_data = example1_manufactured(4.4 ), solver = CrankNicolson1(), fe = Lagrange{3}()),
-)
+    (input_data = example1_manufactured(1.76), solver = CrankNicolson2(), fe = Lagrange{1}()),
+    (input_data = example1_manufactured(2.4 ), solver = CrankNicolson2(), fe = Lagrange{1}()),
+    (input_data = example1_manufactured(2.58), solver = CrankNicolson2(), fe = Lagrange{2}()),
+    (input_data = example1_manufactured(3.4 ), solver = CrankNicolson2(), fe = Lagrange{2}()),
+    (input_data = example1_manufactured(3.51), solver = CrankNicolson2(), fe = Lagrange{3}()),
+    (input_data = example1_manufactured(4.4 ), solver = CrankNicolson2(), fe = Lagrange{3}()),
+    )
 
 # Studies to run 
 # Set `run = false` to skip a study.
@@ -77,9 +83,9 @@ const CASES = (
 # Note: the temporal study fixes the spatial discretization to isolate convergence in time. 
 # One case per solver suffices; Lagrange{1} is the cheapest.
 const STUDIES = (
-    coupled =  (run = true, cases = CASES, Nx_exp_range = 2:6),
+    coupled =  (run = false, cases = CASES, Nx_exp_range = 2:6),
     spatial =  (run = true, cases = CASES, Nx_exp_range = 2:6, τ_fixed = 2.0^(-15)),
-    temporal = (run = true, cases = CASES[[1,2]], τ_exp_range = 2:5, Nx_fixed = 2^9),
+    temporal = (run = true, cases = CASES[[2,8]], τ_exp_range = 2:5, Nx_fixed = 2^9),
 )
 # Output file - timestamp prevents overwriting previous runs
 const OUTPUT_FILE = "convergence_results_$(Dates.format(now(), "yyyy-mm-dd__HH-MM-SS")).txt"
