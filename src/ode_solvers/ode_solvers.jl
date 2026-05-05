@@ -97,5 +97,6 @@ function ode_solve end
 # ========================================
 # Implementations
 # ========================================
+include("common.jl")
 include("crank_nicolson_strategy1_cache.jl")
 include("crank_nicolson_strategy1.jl")
