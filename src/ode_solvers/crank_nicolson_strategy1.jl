@@ -25,11 +25,16 @@ function ode_solve(
 ) where {T <: AbstractFloat}
     τ = T(step(tspan))
     q₅ = 2 * input_data.q₁ + τ * input_data.q₂ + (τ^2 / 2) * input_data.q₃
+    c1 = -τ * input_data.q₄ / q₅
+    c2 = 2 * input_data.q₁ / q₅
+    c3 = -τ * input_data.q₃ / q₅
+    c4 = τ / q₅
+    csts = SVector(c1, c2, c3, c4)
 
     for n in 1:(length(tspan) - 1)
         perform_step!(cache, state, matrices,
             dof_map_m₁, dof_map_m₂,
-            mesh1D, mesh2D, quad, n, τ, q₅, input_data)
+            mesh1D, mesh2D, quad, n, τ, q₅, csts, input_data)
         apply!(callback, state,
             mesh1D, mesh2D, dof_map_m₁, dof_map_m₂, quad, input_data)
     end
@@ -64,6 +69,7 @@ function perform_step!(
         n::Int,
         τ::T,
         q₅::T,
+        csts::SVector{4, T},
         input_data::PDEInputData
 ) where {T}
     t_half = (n - T(0.5)) * τ   # t_{n-1/2}
@@ -77,7 +83,8 @@ function perform_step!(
     newton_solve!(cache, state, dof_map_m₁, dof_map_m₂,
         mesh1D, mesh2D, quad, τ, τα, input_data)
 
-    compute_r̂ⁿ!(cache, state, τ, q₅, input_data)
+    compute_r̂ⁿ!(
+        cache.r̂ⁿ, cache.v̂ⁿ, state.r, state.z, cache.Ff₂, csts, cache.M_m₂xm₂_chol, cache.vec_m₂_1)
 
     update_state!(state, cache.v̂ⁿ, cache.r̂ⁿ, τ)
 
@@ -280,7 +287,7 @@ function newton_solve!(
 
         compute_JH_upper!(
             cache, dof_map_m₁, dof_map_m₂, mesh1D, mesh2D, quad, τ, τα, input_data)
-        sync_JH!(cache)
+        sync_JH!(cache.JH, cache.JH_upper, cache.map_direct, cache.map_mirror)
 
         solve_newton_linear_system!(cache.linsolve)
 
@@ -291,21 +298,6 @@ function newton_solve!(
 
     @warn "newton_solve! did not converge within $maxiter iterations " *
           "(max|H| = $(maximum(abs, cache.minusH)), abstol = $abstol)"
-    return nothing
-end
-
-"""
-    solve_newton_linear_system!(linsolve)
- 
-Solve the Newton linear system ``JH \\cdot \\Delta X = -H`` using the cached
-KLU factorization. Sets `linsolve.isfresh = true` to trigger refactorization.
- 
-# Arguments
-- `linsolve`: `LinearSolve.LinearCache` initialized with `KLUFactorization`.
-"""
-function solve_newton_linear_system!(linsolve)
-    linsolve.isfresh = true
-    LS.solve!(linsolve)
     return nothing
 end
 
@@ -351,7 +343,7 @@ function compute_minusH!(
     assembly_nonlinearity_F!(
         cache.vec_m₁_2, τ, input_data.f, cache.d̂ⁿ, mesh2D, dof_map_m₁, quad)
 
-    # Final assembly: -H = L - Q Xⁿ - nonlinear contributions
+    # Final assembly: -H = L - Q X - nonlinear contributions
     @inbounds for i in 1:m₂
         cache.minusH[i] = cache.L[i] - cache.vec_m₁_1[i] - cache.vec_m₁_2[i] -
                           cache.vec_m₂_1[i]
@@ -416,108 +408,6 @@ function compute_JH_upper!(
     @inbounds @simd for i in (nnz_m₂ + 1):nnz_m₁
         nzval_JH[i] = nzval_Q[i] + nzval_JF[i]
     end
-
-    return nothing
-end
-
-# ==============================================================================
-# sync_JH!
-# ==============================================================================
-"""
-    sync_JH!(cache)
-
-Scatter `cache.JH_upper.data.nzval` into both triangles of `cache.JH.nzval`
-using the pre-computed `cache.map_direct` and `cache.map_mirror` index maps.
-"""
-function sync_JH!(cache::CrankNicolson1Cache)
-    nzval_upper = cache.JH_upper.data.nzval
-    nzval_JH = cache.JH.nzval
-    @inbounds for k in eachindex(nzval_upper)
-        nzval_JH[cache.map_direct[k]] = nzval_upper[k]
-        nzval_JH[cache.map_mirror[k]] = nzval_upper[k]
-    end
-    return nothing
-end
-
-# ==============================================================================
-# compute_r̂ⁿ!
-# ==============================================================================
-
-"""
-    compute_r̂ⁿ!(cache, state, τ, q₅, input_data)
- 
-Recover ``\\hat{r}^n`` via the closed-form expression
-```math
-\\hat{r}^n =
-- \\frac{\\tau q_4}{q_5}\\hat{v}^n_{1:m_2}
-+ \\frac{2q_1}{q_5}r^{n-1}
-- \\frac{\\tau q_3}{q_5}z^{n-1}
-+ \\frac{\\tau}{q_5}\\left(M^{m_2 \\times m_2}\\right)^{-1}
-  \\mathcal{F}^{m_2}(f_3^{n-\\frac{1}{2}}),
-```
-storing the result in `cache.r̂ⁿ`. The solve against ``M^{m_2 \\times m_2}``
-uses the pre-computed Cholesky factorization `cache.M_m₂xm₂_chol`.
-Assumes `cache.v̂ⁿ` and `cache.Ff₂` are already populated.
-"""
-function compute_r̂ⁿ!(
-        cache::CrankNicolson1Cache{T},
-        state::FEMState{T},
-        τ::T,
-        q₅::T,
-        input_data::PDEInputData
-) where {T}
-    q₁ = input_data.q₁
-    q₃ = input_data.q₃
-    q₄ = input_data.q₄
-
-    cst1 = -(τ * q₄ / q₅)
-    cst2 = 2 * q₁ / q₅
-    cst3 = τ * q₃ / q₅
-    cst4 = τ / q₅
-
-    # M_m₂xm₂⁻¹ Ff₂ → cache.vec_m₂_1
-    ldiv!(cache.vec_m₂_1, cache.M_m₂xm₂_chol, cache.Ff₂)
-
-    @inbounds for i in eachindex(cache.r̂ⁿ)
-        cache.r̂ⁿ[i] = cst1 * cache.v̂ⁿ[i] +
-                       cst2 * state.r[i] -
-                       cst3 * state.z[i] +
-                       cst4 * cache.vec_m₂_1[i]
-    end
-
-    return nothing
-end
-
-# ==============================================================================
-# update_state!
-# ==============================================================================
-
-"""
-    update_state!(state, v̂ⁿ, r̂ⁿ, τ)
- 
-Advance `state` from time level ``n-1`` to ``n``:
-```math
-\\begin{aligned}
-v^n &= 2\\hat{v}^n - v^{n-1}, \\\\
-r^n &= 2\\hat{r}^n - r^{n-1}, \\\\
-d^n &= \\tau\\hat{v}^n + d^{n-1}, \\\\
-z^n &= \\tau\\hat{r}^n + z^{n-1}.
-\\end{aligned}
-```
-Also increments `state.n` by 1 and advances `state.t` by ``\\tau``.
-"""
-function update_state!(
-        state::FEMState{T},
-        v̂ⁿ::Vector{T},
-        r̂ⁿ::Vector{T},
-        τ::T
-) where {T}
-    state.n += 1
-    state.t += τ
-    @. state.v = muladd(2, v̂ⁿ, -state.v)
-    @. state.r = muladd(2, r̂ⁿ, -state.r)
-    @. state.d = muladd(τ, v̂ⁿ, state.d)
-    @. state.z = muladd(τ, r̂ⁿ, state.z)
 
     return nothing
 end
