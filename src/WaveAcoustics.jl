@@ -12,7 +12,7 @@ export PDEInputData, example1_manufactured, example1_zero_source, example2_manuf
        example2_zero_source
 export Lagrange, Hermite
 export FEMState, L2ErrorCallback, SolutionCallback
-export CrankNicolson1, CrankNicolson2
+export CrankNicolson1, CrankNicolson2, CrankNicolson3
 export pde_solve
 export convergence_study_coupled, convergence_study_spatial, convergence_study_temporal,
        print_convergence_table

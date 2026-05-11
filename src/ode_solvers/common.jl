@@ -162,3 +162,33 @@ function update_state!(
 
     return nothing
 end
+
+"""
+    update_state!(state, vⁿ, rⁿ, v̂ⁿ, τ, τ_2)
+
+Advance `state` from time level ``n-1`` to ``n``:
+```math
+\\begin{aligned}
+v^n &\\leftarrow v^n, \\\\
+r^n &\\leftarrow r^n, \\\\
+d^n &= \\tau\\hat{v}^n + d^{n-1}, \\\\
+z^n &= \\frac{\\tau}{2}(r^n + r^{n-1}) + z^{n-1}.
+\\end{aligned}
+```
+Also increments `state.n` by 1 and advances `state.t` by ``\\tau``.
+"""
+function update_state!(
+        state, vⁿ, rⁿ, v̂ⁿ, τ, τ_2)
+    state.n += 1
+    state.t += τ
+    for i in eachindex(rⁿ)
+        state.z[i] = τ_2 * (rⁿ[i] + state.r[i]) + state.z[i]
+        state.r[i] = rⁿ[i]
+    end
+    for i in eachindex(v̂ⁿ)
+        state.d[i] = muladd(τ, v̂ⁿ[i], state.d[i])
+        state.v[i] = vⁿ[i]
+    end
+
+    return nothing
+end
