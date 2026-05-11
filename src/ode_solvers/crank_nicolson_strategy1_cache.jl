@@ -16,7 +16,7 @@ Pre-allocated workspace for the Crank–Nicolson Strategy 1 solver.
 - `d̂ⁿ`: midpoint displacement, length `m₁`.
 - `v̂ⁿ`: midpoint velocity, length `m₁`.
 - `r̂ⁿ`: midpoint acoustic, length `m₂`.
-- `X`: Newton iterate ``X \\approx v^n``, length `m₁`.
+- `X`: Newton iterate ``X = v^n``, length `m₁`.
 - `minusH`: residual ``-H(X)``, length `m₁`.
 - `JH_upper`: Jacobian upper-triangular assembly workspace.
 - `JH`: Jacobian in full sparse format, passed to the KLU solver.
@@ -50,9 +50,7 @@ end
 """
     CrankNicolson1Cache(matrices::SystemMatrices{T, I})
  
-Allocate all working arrays, build the `JH_upper` → `JH` index maps,
-initialize the KLU factorization handle, and pre-compute the Cholesky
-factorization of ``M^{m_2 \\times m_2}``.
+Allocate workspace, build block index maps, initialize the KLU factorization, and pre-compute the Cholesky factorization of ``M^{m_2 \\times m_2}``.
 """
 function CrankNicolson1Cache(
         matrices::SystemMatrices{T, I}

@@ -5,7 +5,7 @@ end
 """
     CrankNicolson2Cache{T, I, TS, TM}
  
-Pre-allocated workspace for the Crank–Nicolson Strategy 1 solver.
+Pre-allocated workspace for the Crank–Nicolson Strategy 2 solver.
  
 # Fields
 - `vec_m₁_1`, `vec_m₁_2`, `vec_m₁_3`: scratch vectors of length `m₁`.
@@ -50,9 +50,7 @@ end
 """
     CrankNicolson2Cache(matrices::SystemMatrices{T, I})
  
-Allocate all working arrays, build the `JH_upper` → `JH` index maps,
-initialize the KLU factorization handle, and pre-compute the Cholesky
-factorization of ``M^{m_2 \\times m_2}``.
+Allocate workspace, build block index maps, initialize the KLU factorization, and pre-compute the Cholesky factorization of ``M^{m_2 \\times m_2}``.
 """
 function CrankNicolson2Cache(
         matrices::SystemMatrices{T, I}

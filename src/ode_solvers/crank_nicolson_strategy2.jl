@@ -1,15 +1,6 @@
 # ==============================================================================
 # ode_solve
 # ==============================================================================
-
-"""
-    ode_solve(cache, state, matrices, dof_map_m₁, dof_map_m₂,
-              mesh1D, mesh2D, quad, tspan, input_data, callback)
- 
-Advance `state` over all time steps in `tspan` using the Crank–Nicolson
-Strategy 2 scheme, applying `callback` after each step.
-"""
-
 function ode_solve(
         cache::CrankNicolson2Cache{T},
         state::FEMState{T},
