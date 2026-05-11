@@ -458,7 +458,7 @@ L_2(n)
 = 0.
 \end{aligned}
 ```
-Once ``v^n`` and ``c^n`` have been determined, we compute ``d^n`` and ``z^n`` by
+Once ``v^n`` and ``r^n`` have been determined, we compute ``d^n`` and ``z^n`` by
 ```math
 d^n = d^{n-1} + \frac{\tau}{2}(v^n+v^{n-1}), \quad
 z^n = z^{n-1} + \frac{\tau}{2}(r^n+r^{n-1}).
