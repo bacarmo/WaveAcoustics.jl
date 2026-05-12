@@ -82,9 +82,17 @@ Convergence rates are computed as log₂(eᵢ₋₁/eᵢ) between successive lev
 [`ConvergenceResults`](@ref)
 
 ## Example
-```julia
-results = convergence_study_coupled(solver = CrankNicolson1())
-print_convergence_table(results)
+```julia-repl
+julia> using WaveAcoustics
+
+julia> results = convergence_study_coupled(
+           input_data = example1_manufactured(2.4),
+           solver = CrankNicolson3(),
+           fe = Lagrange{1}(),
+           t_end = 1.0,
+           Nx_exp_range = 3:6);
+
+julia> print_convergence_table(results)
 ```
 """
 function convergence_study_coupled(;
@@ -124,9 +132,18 @@ Refines the mesh while holding τ constant to isolate spatial discretization err
 [`ConvergenceResults`](@ref)
 
 ## Example
-```julia
-results = convergence_study_spatial(τ_fixed = 2.0^(-8))
-print_convergence_table(results)
+```julia-repl
+julia> using WaveAcoustics
+
+julia> results = convergence_study_spatial(
+           input_data = example1_manufactured(2.4),
+           solver = CrankNicolson3(),
+           fe = Lagrange{1}(),
+           t_end = 1.0,
+           Nx_exp_range = 2:5,
+           τ_fixed = 2^-15);
+
+julia> print_convergence_table(results)
 ```
 """
 function convergence_study_spatial(;
@@ -166,9 +183,18 @@ Refines the time step while holding Nx constant to isolate temporal discretizati
 [`ConvergenceResults`](@ref)
 
 ## Example
-```julia
-results = convergence_study_temporal(Nx_fixed = 2^7)
-print_convergence_table(results)
+```julia-repl
+julia> using WaveAcoustics
+
+julia> results = convergence_study_temporal(
+           input_data = example1_manufactured(2.4),
+           solver = CrankNicolson3(),
+           fe = Lagrange{1}(),
+           t_end = 1.0,
+           τ_exp_range = 2:5, 
+           Nx_fixed = 2^9);
+
+julia> print_convergence_table(results)
 ```
 """
 function convergence_study_temporal(;
