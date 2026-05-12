@@ -11,6 +11,8 @@ makedocs(;
         canonical = "https://bacarmo.github.io/WaveAcoustics.jl",
         edit_link = "main",
         assets = String[],
+        size_threshold = 300 * 1024,  # error threshold: 300 KiB
+        size_threshold_warn = 200 * 1024,   # warning threshold: 200 KiB
         mathengine = MathJax3() # The options are either KaTeX (default), MathJax v2, or MathJax v3, enabled by passing an instance of KaTeX, MathJax2, or MathJax3 objects, respectively.
     ),
     pages = [
@@ -24,7 +26,7 @@ makedocs(;
             "Example 1" => "examples/example1.md",
             "Example 2" => "examples/example2.md"
         ],
-        "API Reference" => "api/api.md"
+        "API" => "api/api.md"
     ]
 )
 

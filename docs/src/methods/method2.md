@@ -1,39 +1,37 @@
 # Scheme 2
 The second scheme is defined using the linearized Crank-Nicolson Galerkin method, which consists of finding ``U^n, V^n \in \mathcal{V}_{m_1}`` and ``Z^n, R^n \in \mathcal{V}_{m_2}`` such that
 ```math
-\begin{align}
-\label{def:approx2}
+\begin{align*}
 \begin{aligned}
 & \big(\varphi,\bar{\partial}V^n\big)
-+ \alpha(t_{n-\frac{1}{2}})\Big[
++ \alpha^{n-\frac{1}{2}}\Big[
     \big(\nabla\varphi,\nabla\widehat{U}^n\big)
   - \big(\varphi,\widehat{R}^n)_{\Gamma_1}
   + \big(\varphi,g(V^{\ast n})\big)_{\Gamma_1}\Big]
 + \big(\varphi,f(U^{\ast n})\big) 
-= \big(\varphi,f_1(t_{n-\frac{1}{2}}\big),
+= \big(\varphi,f_1^{n-\frac{1}{2}}\big),
 \quad\forall\varphi\in \mathcal{V}_{m_1},
 \\
 & \big(\phi,q_1\bar{\partial}R^n
 + q_2\widehat{R}^n
 + q_3\widehat{Z}^n
-+ q_4V^{\ast n}\big)_{\Gamma_1}
-= \big(\phi,f_2(t_{n-\frac{1}{2}})\big)_{\Gamma_1},
++ q_4\widehat{V}^n\big)_{\Gamma_1}
+= \big(\phi,f_2^{n-\frac{1}{2}}\big)_{\Gamma_1},
 \quad\forall\phi\in \mathcal{V}_{m_2},
 \\
 & 
 \bar{\partial}U^n = \widehat{V}^n,\quad 
 \bar{\partial}Z^n = \widehat{R}^n,
 \end{aligned}
-\end{align}
+\end{align*}
 ```
-for ``n = \text{“1,0''},\,1,\,2,\,\ldots``, with ``U^0, V^0 \in \mathcal{V}_{m_1}`` and ``Z^0, R^0 \in \mathcal{V}_{m_2}`` given as approximations of the initial solutions ``u_0, v_0, z_0``, and ``r_0``.
+for ``n = \text{“1,0''},\,1,\,2,\,\ldots``, with ``U^0, V^0 \in \mathcal{V}_{m_1}`` and ``Z^0, R^0 \in \mathcal{V}_{m_2}`` given as approximations of the initial conditions ``u_0, v_0, z_0``, and ``r_0``, defined in the same way as in Scheme 1.
 
 !!! details "Note"
     - The first two time steps in \eqref{def:approx2} constitute a single-step predictor-corrector initialization.
     - In the prediction step (case ``n=\text{“1,0''}``), temporary approximations ``U^{\text{“1,0''}}``, ``V^{\text{“1,0''}}``, ``Z^{\text{“1,0''}}``, and ``R^{\text{“1,0''}}`` at ``t_1`` are computed using the initial solution ``U^0``, ``V^0``, ``Z^0``, and ``R^0``.    
     - In the correction step (case ``n=1``), the temporary approximations from the prediction step, together with the initial solutions, are used to obtain the definitive approximations ``U^1``, ``V^1``, ``Z^1``, and ``R^1``.
-    - For ``n \geq 2``,  the approximations are generated using information from the two previous time steps at the nonlinear terms and the coupling term in the acoustic equation.
-    - At each time step, two independent linear systems are solved, as a result of choices that lead to decoupling the second equation and linearization of the nonlinear terms.
+    - For ``n \geq 2``,  the approximations are generated using information from the two previous time steps at the nonlinear terms.
 
 !!! details "Notation"
     In addition to the operators 
@@ -53,84 +51,161 @@ for ``n = \text{“1,0''},\,1,\,2,\,\ldots``, with ``U^0, V^0 \in \mathcal{V}_{m
     \end{cases}
     ```
 
-## Matrix formulation
-Representing the approximate solutions in terms of the basis functions,
+## Matrix Formulation
 ```math
-U^n = \sum_{j=1}^{m_1} d_j^n\varphi_j,\;
-V^n = \sum_{j=1}^{m_1} v_j^n\varphi_j,\;
-Z^n = \sum_{j=1}^{m_2} z_j^n\phi_j,\;
-R^n = \sum_{j=1}^{m_2} r_j^n\phi_j,
-```
-and choosing test functions ``\varphi=\varphi_i`` for ``i = 1, \ldots, m_1`` and ``\phi=\phi_i`` for ``i = 1, \ldots, m_2``, we obtain the system
-```math
-\begin{align}
-\label{def:approx2:mat_form}
+\begin{align*}
 \begin{aligned}
 & M^{m_1\times m_1}\bar{\partial}v^n
-+ \alpha(t_{n-\frac{1}{2}})\Big[  
++ \alpha^{n-\frac{1}{2}}\Big[  
     K^{m_1\times m_1}\widehat{d}^n
   - M^{m_1\times m_2}\widehat{r}^n
   + G^{m_1}(v^{\ast n})\Big]
 + F^{m_1}(d^{\ast n})
-= \mathcal{F}_1^{m_1}(t_{n-\frac{1}{2}}),
+= \mathcal{F}^{m_1}(f_1^{n-\frac{1}{2}}),
 \\
 & M^{m_2\times m_2}\big[
   q_1\bar{\partial}r^n
 + q_2\widehat{r}^n
 + q_3\widehat{z}^n]
-+ q_4M^{m_2\times m_1}v^{\ast n}
-= \mathcal{F}_2^{m_2}(t_{n-\frac{1}{2}}),
++ q_4M^{m_2\times m_1}\widehat{v}^n
+= \mathcal{F}^{m_2}(f_2^{n-\frac{1}{2}}),
 \\
 & \bar{\partial}d^n = \widehat{v}^n,\quad
 \bar{\partial}z^n = \widehat{r}^n.
 \end{aligned}
-\end{align}
-```
-
-## Linear system
-Using ``d^n = d^{n-1} + \frac{\tau}{2}(v^n+v^{n-1})`` and ``z^n = z^{n-1} + \frac{\tau}{2}(r^n+r^{n-1})`` into system \eqref{def:approx2:mat_form} yields
-```math
-\begin{align*}
-%\label{def:approx2:mat_form_opt2}
-\begin{aligned}
-(q_1+\frac{\tau}{2}q_2+\frac{\tau^2}{4}q_3) M^{m_2\times m_2} r^n
-&=
-(q_1-\frac{\tau}{2}q_2-\frac{\tau^2}{4}q_3) M^{m_2\times m_2} r^{n-1}
--\tau q_3 M^{m_2\times m_2} z^{n-1}
-\\
-&-\tau q_4 M^{m_2\times m_1} v^{\ast n}
-+ \tau\mathcal{F}_2^{m_2}(t_{n-\frac{1}{2}}),
-\\[10pt]
-\Big[
-  M^{m_1\times m_1} + \frac{\tau^2\alpha^{n-\frac{1}{2}}}{4}K^{m_1\times m_1}
-\Big] v^n
-&=
-  M^{m_1\times m_1}v^{n-1}
-\\
-& - \tau\alpha^{n-\frac{1}{2}}\Big[
-K^{m_1\times m_1}\Big(\frac{\tau}{4}v^{n-1}+d^{n-1}\Big)
-- M^{m_1\times m_2}\widehat{r}^n
-+ G^{m_1}(v^{*n})
-\Big]
-\\
-& - \tau F^{m_1}(d^{*n})
-+ \tau\mathcal{F}_1^{m_1}(t_{n-\frac{1}{2}}).
-\end{aligned}
 \end{align*}
 ```
 
-!!! details "Note"
-    The computation of ``r^n`` can be simplified by multiplying both sides by the inverse of ``(q_1+\frac{\tau}{2}q_2+\frac{\tau^2}{4}q_3) M^{m_2\times m_2}``.
-    Furthermore, for the domain considered in the algorithm implementation, ``M^{m_2\times m_1}v^{\ast n}\equiv M^{m_2\times m_2}v^{\ast n}[1:m_2]`` holds, yielding
+## Solving the Algebraic Systems
+```math
+Q(n) \widehat{v}^n 
+= L(n,v^{*n},d^{*n}).
+```
+Once ``\hat{v}^n`` has been determined, we compute ``\hat{r}^n`` via
+```math
+\hat{r}^n
+=
+- \frac{\tau q_4}{q_5}\hat{v}_{1:m_2}^n
++ \frac{2q_1}{q_5} r^{n-1}
+- \frac{\tau q_3}{q_5} z^{n-1}
++ \frac{\tau}{q_5} \Big(M^{m_2\times m_2}\Big)^{-1}
+  \mathcal{F}^{m_2}(f_2^{n-\frac{1}{2}}),
+```
+and the remaining quantities ``d^n``, ``v^n``, ``z^n``, and ``r^n`` by
+```math
+\begin{align*}
+& v^n = 2\hat{v}^n - v^{n-1},
+\quad r^n = 2\hat{r}^n - r^{n-1},
+\quad d^n = \tau\hat{v}^n + d^{n-1},
+\quad z^n = \tau\hat{r}^n + z^{n-1}.
+\end{align*}
+```
+
+
+!!! details "Details"
+    Rewriting the second equation in terms of ``\hat{r}^n`` and substituting it into the first yields:
     ```math
-    r^n 
-    = \frac{q_1 - \frac{\tau}{2}q_2 
-    - \frac{\tau^2}{4}q_3}{q_1+\frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} r^{n-1}
-    - \frac{\tau q_3}{q_1 + \frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} z^{n-1}
-    - \frac{\tau q_4}{q_1 + \frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} v^{\ast n}[1:m_2]
-    + s^n,
+    \begin{align*}
+    & M^{m_1\times m_1}\bar{\partial}v^n
+    + \alpha^{n-\frac{1}{2}}\Big[  
+        K^{m_1\times m_1}\widehat{d}^n
+      + G^{m_1}(v^{\ast n})\Big]
+    + F^{m_1}(d^{\ast n})
+    \\[5pt]
+    &\qquad
+    + \frac{\alpha^{n-\frac{1}{2}}}{q_5}
+    \begin{bmatrix}
+      \tau q_4M^{m_2\times m_2} \widehat{v}_{1:m_2}^n
+      - M^{m_2\times m_2}\big( 2q_1r^{n-1} - \tau q_3z^{n-1} \big)
+      - \tau \mathcal{F}^{m_2}(f_2^{n-\frac{1}{2}})
+      \\[5pt]
+      0^{(m_1-m_2)}
+    \end{bmatrix}
+    = \mathcal{F}^{m_1}(f_1^{n-\frac{1}{2}}).
+    \end{align*}
     ```
-    where ``s^n`` is obtained from
+    Applying the identities
     ```math
-    M^{m_2\times m_2} s^n = \frac{\tau}{q_1 + \frac{\tau}{2}q_2 + \frac{\tau^2}{4}q_3} \mathcal{F}_2^{m_2}(t_{n-\frac{1}{2}}).
+    \bar\partial v^n = \frac{2}{\tau}\widehat{v}^n - \frac{2}{\tau}v^{n-1},
+    \quad
+    \widehat{d}^n = \frac{\tau}{2} \widehat{v}^n + d^{n-1},
+    ```
+    we obtain
+    ```math
+    \begin{align*}
+    & M^{m_1\times m_1} \big(\frac{2}{\tau}\widehat{v}^n-\frac{2}{\tau}v^{n-1}\big)
+    + \alpha^{n-\frac{1}{2}}\Big[  
+        K^{m_1\times m_1} \big(\frac{\tau}{2}\widehat{v}^n+d^{n-1}\big)
+      + G^{m_1}(v^{\ast n})\Big]
+    + F^{m_1}(d^{\ast n})
+    \\[10pt]
+    &\qquad
+    + \frac{\alpha^{n-\frac{1}{2}}}{q_5}
+    \begin{bmatrix}
+      \tau q_4M^{m_2\times m_2} \widehat{v}_{1:m_2}^n
+      - M^{m_2\times m_2}\big( 2q_1r^{n-1} - \tau q_3z^{n-1} \big)
+      - \tau \mathcal{F}^{m_2}(f_2^{n-\frac{1}{2}})
+      \\[5pt]
+      0^{(m_1-m_2)}
+    \end{bmatrix}
+    = \mathcal{F}^{m_1}(f_1^{n-\frac{1}{2}}).
+    \end{align*}
+    ```
+    Isolating ``\widehat{v}^n``:
+    ```math
+    \begin{align*}
+    &
+    \Big(
+        2M^{m_1\times m_1}
+        + \frac{\tau^2}{2}\alpha^{n-\frac{1}{2}} K^{m_1\times m_1}
+        + \frac{\tau^2q_4}{q_5}\alpha^{n-\frac{1}{2}}
+          \begin{bmatrix}
+          M^{m_2\times m_2}       & 0^{m_2\times(m_1-m_2)}\\[5pt]
+          0^{(m_1-m_2)\times m_2} & 0^{(m_1-m_2)\times(m_1-m_2)}
+          \end{bmatrix}
+    \Big) \widehat{v}^n 
+    \\[10pt]
+    &\qquad
+    = -\tau\alpha^{n-\frac{1}{2}} G^{m_1}(v^{\ast n})  
+    - \tau F^{m_1}(d^{\ast n})
+    + 2M^{m_1\times m_1}v^{n-1}
+    - \tau \alpha^{n-\frac{1}{2}}K^{m_1\times m_1} d^{n-1}
+    + \tau \mathcal{F}^{m_1}(f_1^{n-\frac{1}{2}})
+    \\[10pt]
+    &\qquad
+    + \frac{\tau}{q_5}\alpha^{n-\frac{1}{2}}
+    \begin{bmatrix}
+      M^{m_2\times m_2}\big( 2q_1r^{n-1} - \tau q_3z^{n-1} \big)
+      + \tau \mathcal{F}^{m_2}(f_2^{n-\frac{1}{2}})
+      \\[5pt]
+      0^{(m_1-m_2)}
+    \end{bmatrix}
+    \end{align*}
+    ```
+!!! details "Matrix and vector definitions"
+    ```math
+    \begin{align*}
+    Q = & 
+    2M^{m_1\times m_1} 
+    + \frac{\tau^2}{2}\alpha^{n-\frac{1}{2}}K^{m_1\times m_1}
+    + \frac{\tau^2q_4}{q_5}\alpha^{n-\frac{1}{2}}
+    \begin{bmatrix}
+    M^{m_2\times m_2}       & 0^{m_2\times(m_1-m_2)}\\[5pt]
+    0^{(m_1-m_2)\times m_2} & 0^{(m_1-m_2)\times(m_1-m_2)}
+    \end{bmatrix}
+    \\[30pt]
+    L =&
+    -\tau\alpha^{n-\frac{1}{2}} G^{m_1}(v^{\ast n})  
+    - \tau F^{m_1}(d^{\ast n})
+    + 2M^{m_1\times m_1}v^{n-1}
+    - \tau \alpha^{n-\frac{1}{2}}K^{m_1\times m_1} d^{n-1}
+    + \tau \mathcal{F}^{m_1}(f_1^{n-\frac{1}{2}})
+    + \frac{\tau}{q_5}\alpha^{n-\frac{1}{2}}
+    \begin{bmatrix}
+      M^{m_2\times m_2}\big( 2q_1r^{n-1} - \tau q_3z^{n-1} \big)
+      + \tau \mathcal{F}^{m_2}(f_2^{n-\frac{1}{2}})
+      \\[5pt]
+      0^{(m_1-m_2)}
+    \end{bmatrix}
+    \end{align*}
     ```

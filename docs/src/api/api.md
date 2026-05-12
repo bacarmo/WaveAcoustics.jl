@@ -1,135 +1,54 @@
 
-# API Reference
-Documentation for [WaveAcoustics](https://github.com/bacarmo/WaveAcoustics.jl).
-
+## Index
 ```@index
 ```
 
-## Mesh
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["mesh.jl"]
-```
-
-## Finite Element Families
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["fe_families.jl"]
-```
-
-## Basis Functions
-```@meta
-CurrentModule = WaveAcoustics
-```
-
-### 1D Lagrange Elements
+## Public API
+### Problem Definition
 ```@docs
-basis_functions(::Lagrange{1,1}, ξ::T) where {T<:Real}
-basis_functions_derivatives(::Lagrange{1,1}, ξ::T) where {T<:Real}
+PDEInputData
+example1_manufactured
+example1_zero_source
+example2_manufactured
+example2_zero_source
 ```
-
+### Finite Element Family
 ```@docs
-basis_functions(::Lagrange{1,2}, ξ::T) where {T<:Real}
-basis_functions_derivatives(::Lagrange{1,2}, ξ::T) where {T<:Real}
+Lagrange
 ```
-
+### Time Integration
 ```@docs
-basis_functions(::Lagrange{1,3}, ξ::T) where {T<:Real}
-basis_functions_derivatives(::Lagrange{1,3}, ξ::T) where {T<:Real}
+CrankNicolson1
+CrankNicolson2
+CrankNicolson3
 ```
-
-### 2D Lagrange Elements
+### Solver
 ```@docs
-basis_functions(::Lagrange{2,Deg}, ξ::T, η::T) where {Deg,T<:Real}
-basis_functions_derivatives(::Lagrange{2,Deg}, ξ::T, η::T) where {Deg,T<:Real}
+pde_solve
 ```
-
-### 1D Hermite Elements
+### Callbacks
 ```@docs
-basis_functions(::Hermite{1,3}, ξ::T) where {T<:Real}
-basis_functions_derivatives(::Hermite{1,3}, ξ::T) where {T<:Real}
+L2ErrorCallback
 ```
-
-### 2D Hermite Elements
+### Convergence study
 ```@docs
-basis_functions(::Hermite{2,3}, ξ::T, η::T) where {T<:Real}
-basis_functions_derivatives(::Hermite{2,3}, ξ::T, η::T) where {T<:Real}
+convergence_study_coupled
+convergence_study_spatial
+convergence_study_temporal
+print_convergence_table
 ```
 
-## Boundary Conditions
+## Internal API
 ```@autodocs
 Modules = [WaveAcoustics]
-Pages = ["boundary_conditions.jl"]
-```
-
-## DOF Map
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["dof_map.jl"]
-```
-
-## Quadrature Setup
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["quadrature_setup.jl"]
-```
-
-## Assemble local matrices
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["assembly_local_matrices.jl"]
-```
-
-## Assemble global matrices
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["assembly_global_matrices.jl"]
-```
-
-## Assemble global vectors
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["assembly_global_vectors.jl"]
-```
-## Initial Solution
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["initial_solution.jl"]
-```
-
-## PDE Input Data
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["pde_inputdata.jl"]
-```
-
-## PDE Solve
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["pde_solve.jl"]
-```
-
-## EDO Solve
-### Crank-Nicolson Method
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["crank_nicolson.jl"]
-```
-
-### Linearized Crank-Nicolson Method
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["crank_nicolson_linearized.jl"]
-```
-
-## Error norms
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["error_norms.jl"]
-```
-
-## Convergence test
-```@autodocs
-Modules = [WaveAcoustics]
-Pages = ["convergence_test.jl"]
+Filter = t -> !(t in [
+    PDEInputData,
+    example1_manufactured, example1_zero_source,
+    example2_manufactured, example2_zero_source,
+    Lagrange,
+    CrankNicolson1, CrankNicolson2, CrankNicolson3,
+    pde_solve,
+    L2ErrorCallback,
+    convergence_study_coupled, convergence_study_spatial, convergence_study_temporal, print_convergence_table
+])
 ```

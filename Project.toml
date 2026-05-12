@@ -1,30 +1,24 @@
 name = "WaveAcoustics"
 uuid = "015e6fd1-d146-4073-8025-2809e47f770e"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Bruno Alves do Carmo <bruno.carmo@ppgi.ufrj.br>"]
 
 [workspace]
-projects = ["docs"]
+projects = ["test", "docs"]
 
 [deps]
-FixedSizeArrays = "3821ddf9-e5b5-40d5-8e25-6813ab96b5e2"
 GaussQuadrature = "d54b0c1a-921d-58e0-8e36-89d8069c0969"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-FixedSizeArrays = "1.2.0"
 GaussQuadrature = "0.5.8"
 LinearAlgebra = "1.12.0"
+LinearSolve = "3.75.0"
 Printf = "1.11.0"
 SparseArrays = "1.12.0"
 StaticArrays = "1.9.15"
 julia = "1.12"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]
