@@ -62,24 +62,24 @@ using WaveAcoustics
 # Cases to run
 #! format: off
 const CASES = (
-    (input_data = example1_manufactured(1.76), solver = CrankNicolson1(), fe = Lagrange{1}()),
-    (input_data = example1_manufactured(2.4 ), solver = CrankNicolson1(), fe = Lagrange{1}()),
-    (input_data = example1_manufactured(2.58), solver = CrankNicolson1(), fe = Lagrange{2}()),
-    (input_data = example1_manufactured(3.4 ), solver = CrankNicolson1(), fe = Lagrange{2}()),
-    (input_data = example1_manufactured(3.51), solver = CrankNicolson1(), fe = Lagrange{3}()),
-    (input_data = example1_manufactured(4.4 ), solver = CrankNicolson1(), fe = Lagrange{3}()),
-    (input_data = example1_manufactured(1.76), solver = CrankNicolson2(), fe = Lagrange{1}()),
-    (input_data = example1_manufactured(2.4 ), solver = CrankNicolson2(), fe = Lagrange{1}()),
-    (input_data = example1_manufactured(2.58), solver = CrankNicolson2(), fe = Lagrange{2}()),
-    (input_data = example1_manufactured(3.4 ), solver = CrankNicolson2(), fe = Lagrange{2}()),
-    (input_data = example1_manufactured(3.51), solver = CrankNicolson2(), fe = Lagrange{3}()),
-    (input_data = example1_manufactured(4.4 ), solver = CrankNicolson2(), fe = Lagrange{3}()),
     (input_data = example1_manufactured(1.76), solver = CrankNicolson3(), fe = Lagrange{1}()),
     (input_data = example1_manufactured(2.4 ), solver = CrankNicolson3(), fe = Lagrange{1}()),
     (input_data = example1_manufactured(2.58), solver = CrankNicolson3(), fe = Lagrange{2}()),
     (input_data = example1_manufactured(3.4 ), solver = CrankNicolson3(), fe = Lagrange{2}()),
     (input_data = example1_manufactured(3.51), solver = CrankNicolson3(), fe = Lagrange{3}()),
     (input_data = example1_manufactured(4.4 ), solver = CrankNicolson3(), fe = Lagrange{3}()),
+    (input_data = example2_manufactured(1.76), solver = CrankNicolson3(), fe = Lagrange{1}()),
+    (input_data = example2_manufactured(2.4 ), solver = CrankNicolson3(), fe = Lagrange{1}()),
+    (input_data = example2_manufactured(2.58), solver = CrankNicolson3(), fe = Lagrange{2}()),
+    (input_data = example2_manufactured(3.4 ), solver = CrankNicolson3(), fe = Lagrange{2}()),
+    (input_data = example2_manufactured(3.51), solver = CrankNicolson3(), fe = Lagrange{3}()),
+    (input_data = example2_manufactured(4.4 ), solver = CrankNicolson3(), fe = Lagrange{3}()),
+    (input_data = example3_manufactured(1.76), solver = CrankNicolson3(), fe = Lagrange{1}()),
+    (input_data = example3_manufactured(2.4 ), solver = CrankNicolson3(), fe = Lagrange{1}()),
+    (input_data = example3_manufactured(2.58), solver = CrankNicolson3(), fe = Lagrange{2}()),
+    (input_data = example3_manufactured(3.4 ), solver = CrankNicolson3(), fe = Lagrange{2}()),
+    (input_data = example3_manufactured(3.51), solver = CrankNicolson3(), fe = Lagrange{3}()),
+    (input_data = example3_manufactured(4.4 ), solver = CrankNicolson3(), fe = Lagrange{3}()),
     )
 
 # Studies to run 
@@ -90,7 +90,7 @@ const CASES = (
 # One case per solver suffices; Lagrange{1} is the cheapest.
 const STUDIES = (
     coupled =  (run = false, cases = CASES, Nx_exp_range = 2:6),
-    spatial =  (run = true, cases = CASES, Nx_exp_range = 2:6, τ_fixed = 2.0^(-15)),
+    spatial =  (run = true, cases = CASES, Nx_exp_range = 3:6, τ_fixed = 2.0^(-15)),
     temporal = (run = true, cases = CASES[[2,8,14]], τ_exp_range = 2:5, Nx_fixed = 2^9),
 )
 # Output file - timestamp prevents overwriting previous runs

@@ -137,7 +137,6 @@ struct PDEInputData{
     z::Tz
     r::Tr
 end
-
 # ============================================================================
 # Example 1
 # ============================================================================
@@ -145,7 +144,7 @@ end
     example1_manufactured(a::Float64=2.4) -> PDEInputData
 
 Manufactured solution with
-``g(x, s) = (1 + e^{-x^2})(\\sin(s) + 2s)``:
+``g(x, s) = (1 + e^{-x^2})(\\sin(s) + 2s)`` and ``f(s) = \\arctan(s)\\``:
 ```math
 \\begin{alignat*}{2}
 & u(x,y,t)   &&= (x^a - x)(y^a - 1)(4 + t^2), \\\\
@@ -178,71 +177,37 @@ function example1_manufactured(a::Float64 = 2.4)
     # Coefficient functions
     α = @inline t -> 1.0 + exp(-t)
 
-    f = @inline function (s)
-        s_abs = abs(s)
-        s_abs3 = s_abs * s_abs * s_abs
-        return s * s_abs3
-    end
-    df = @inline function (s)
-        s_abs = abs(s)
-        s_abs3 = s_abs * s_abs * s_abs
-        return 4.0 * s_abs3
-    end
+    f = @inline s -> atan(s)
+    df = @inline s -> inv(1.0 + s * s)
 
     g = @inline (x, s) -> (1.0 + exp(-x * x)) * muladd(2.0, s, sin(s))
     ∂ₛg = @inline (x, s) -> (1.0 + exp(-x * x)) * (2.0 + cos(s))
 
     # Analytical solutions
-    u = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * (4.0 + t * t)
-    end
-    v = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * (2.0 * t)
-    end
+    u = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * (4.0 + t * t)
+    v = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * (2.0 * t)
 
     z = @inline function (x, t)
-        xa = x^a
-        xa_minus_x = xa - x
+        xa_minus_x = x^a - x
         two_t = 2.0 * t
         exp_term = 1.0 + exp(-x * x)
-
         return sinpi(x) +
                exp_term * ((cos(-xa_minus_x * two_t) - 1.0) /
                 (2.0 * xa_minus_x) - xa_minus_x * (two_t * t))
     end
     r = @inline function (x, t)
-        xa = x^a
-        xa_minus_x = xa - x
+        xa_minus_x = x^a - x
         exp_term = 1.0 + exp(-x * x)
-
         return exp_term * (sin(-xa_minus_x * (2.0 * t)) - xa_minus_x * (4.0 * t))
     end
 
     # Auxiliary functions for manufactured source terms
-    ∂ₜₜu = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * 2.0
-    end
-    Δu = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        xa_minus_2 = x^a_minus_2
-        ya_minus_2 = y^a_minus_2
-        time_term = 4.0 + t * t
-
-        return ((axa_minus_1 * xa_minus_2) * (ya - 1.0) +
-                (xa - x) * (axa_minus_1 * ya_minus_2)) * time_term
-    end
+    ∂ₜₜu = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * 2.0
+    Δu = @inline (x, y, t) -> ((axa_minus_1 * x^a_minus_2) * (y^a - 1.0) +
+                               (xa - x) * (a^xa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
     ∂ₜₜz = @inline function (x, t)
-        xa = x^a
-        xa_minus_x = xa - x
+        xa_minus_x = x^a - x
         exp_term = 1.0 + exp(-x * x)
-
         return -2.0 * exp_term * xa_minus_x * (2.0 + cos(2.0 * t * xa_minus_x))
     end
 
@@ -252,21 +217,9 @@ function example1_manufactured(a::Float64 = 2.4)
                            q₄ * v(x, ymin, t)
 
     # Initial conditions
-    u₀ = @inline function (x, y)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * 4.0
-    end
-    ∂ₓu₀ = @inline function (x, y)
-        ya = y^a
-        xa_minus_1 = x^a_minus_1
-        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
-    end
-    ∂ᵧu₀ = @inline function (x, y)
-        xa = x^a
-        ya_minus_1 = y^a_minus_1
-        return (xa - x) * (a * ya_minus_1) * 4.0
-    end
+    u₀ = @inline (x, y) -> (x^a - x) * (y^a - 1.0) * 4.0
+    ∂ₓu₀ = @inline (x, y) -> (a * x^a_minus_1 - 1.0) * (y^a - 1.0) * 4.0
+    ∂ᵧu₀ = @inline (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4.0
     v₀ = @inline (x, y) -> 0.0
     ∂ₓv₀ = @inline (x, y) -> 0.0
     ∂ᵧv₀ = @inline (x, y) -> 0.0
@@ -310,16 +263,8 @@ function example1_zero_source(a::Float64 = 2.4)
     # Coefficient functions
     α = @inline t -> 1.0 + exp(-t)
 
-    f = @inline function (s)
-        s_abs = abs(s)
-        s_abs3 = s_abs * s_abs * s_abs
-        return s * s_abs3
-    end
-    df = @inline function (s)
-        s_abs = abs(s)
-        s_abs3 = s_abs * s_abs * s_abs
-        return 4.0 * s_abs3
-    end
+    f = @inline s -> atan(s)
+    df = @inline s -> inv(1.0 + s * s)
 
     g = @inline (x, s) -> (1.0 + exp(-x * x)) * muladd(2.0, s, sin(s))
     ∂ₛg = @inline (x, s) -> (1.0 + exp(-x * x)) * (2.0 + cos(s))
@@ -328,22 +273,10 @@ function example1_zero_source(a::Float64 = 2.4)
     f₁ = @inline (x, y, t) -> 0.0
     f₂ = @inline (x, t) -> 0.0
 
-    # Initial conditions (same as manufactured case at t = 0)
-    u₀ = @inline function (x, y)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * 4.0
-    end
-    ∂ₓu₀ = @inline function (x, y)
-        ya = y^a
-        xa_minus_1 = x^a_minus_1
-        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
-    end
-    ∂ᵧu₀ = @inline function (x, y)
-        xa = x^a
-        ya_minus_1 = y^a_minus_1
-        return (xa - x) * (a * ya_minus_1) * 4.0
-    end
+    # Initial conditions
+    u₀ = @inline (x, y) -> (x^a - x) * (y^a - 1.0) * 4.0
+    ∂ₓu₀ = @inline (x, y) -> (a * x^a_minus_1 - 1.0) * (y^a - 1.0) * 4.0
+    ∂ᵧu₀ = @inline (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4.0
     v₀ = @inline (x, y) -> 0.0
     ∂ₓv₀ = @inline (x, y) -> 0.0
     ∂ᵧv₀ = @inline (x, y) -> 0.0
@@ -365,16 +298,19 @@ function example1_zero_source(a::Float64 = 2.4)
 end
 
 # ============================================================================
-# Example 2: Linear Coupling Test Case
+# Example 2
 # ============================================================================
 """
     example2_manufactured(a::Float64=2.4) -> PDEInputData
 
-Manufactured solution with linear coupling ``g(x,s) = (1+e^{-x^2})s``:
+Manufactured solution with
+``g(x, s) = (1 + e^{-x^2})(\\sin(s) + 2s)`` and ``f(s) = s|s|^3``:
 ```math
 \\begin{alignat*}{2}
 & u(x,y,t)   &&= (x^a - x)(y^a - 1)(4 + t^2), \\\\
-& z(x,t)     &&= \\sin(\\pi x) - (1+e^{-x^2})(x^a-x)t^2,
+& z(x,t)     &&= \\sin(\\pi x) + (1+e^{-x^2})
+                  \\left[\\frac{\\cos\\big(-2t(x^a-x)\\big)-1}{2(x^a-x)}
+                  - 2t^2(x^a-x)\\right],
 \\end{alignat*}
 ```
 where the acoustic displacement ``z(x,t)`` is obtained by integrating
@@ -412,53 +348,35 @@ function example2_manufactured(a::Float64 = 2.4)
         return 4.0 * s_abs3
     end
 
-    g = @inline (x, s) -> (1.0 + exp(-x * x)) * s
-    ∂ₛg = @inline (x, s) -> 1.0 + exp(-x * x)
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * muladd(2.0, s, sin(s))
+    ∂ₛg = @inline (x, s) -> (1.0 + exp(-x * x)) * (2.0 + cos(s))
 
     # Analytical solutions
-    u = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * (4.0 + t * t)
-    end
-    v = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * (2.0 * t)
-    end
+    u = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * (4.0 + t * t)
+    v = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * (2.0 * t)
 
     z = @inline function (x, t)
-        xa = x^a
+        xa_minus_x = x^a - x
+        two_t = 2.0 * t
         exp_term = 1.0 + exp(-x * x)
-        return sinpi(x) - exp_term * (xa - x) * (t * t)
+        return sinpi(x) +
+               exp_term * ((cos(-xa_minus_x * two_t) - 1.0) /
+                (2.0 * xa_minus_x) - xa_minus_x * (two_t * t))
     end
-
     r = @inline function (x, t)
-        xa = x^a
+        xa_minus_x = x^a - x
         exp_term = 1.0 + exp(-x * x)
-        return -exp_term * (xa - x) * (2.0 * t)
+        return exp_term * (sin(-xa_minus_x * (2.0 * t)) - xa_minus_x * (4.0 * t))
     end
 
     # Auxiliary functions for manufactured source terms
-    ∂ₜₜu = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * 2.0
-    end
-    Δu = @inline function (x, y, t)
-        xa = x^a
-        ya = y^a
-        xa_minus_2 = x^a_minus_2
-        ya_minus_2 = y^a_minus_2
-        time_term = 4.0 + t * t
-
-        return ((axa_minus_1 * xa_minus_2) * (ya - 1.0) +
-                (xa - x) * (axa_minus_1 * ya_minus_2)) * time_term
-    end
+    ∂ₜₜu = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * 2.0
+    Δu = @inline (x, y, t) -> ((axa_minus_1 * x^a_minus_2) * (y^a - 1.0) +
+                               (xa - x) * (a^xa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
     ∂ₜₜz = @inline function (x, t)
-        xa = x^a
+        xa_minus_x = x^a - x
         exp_term = 1.0 + exp(-x * x)
-        return -2.0 * exp_term * (xa - x)
+        return -2.0 * exp_term * xa_minus_x * (2.0 + cos(2.0 * t * xa_minus_x))
     end
 
     # Manufactured source terms
@@ -467,21 +385,9 @@ function example2_manufactured(a::Float64 = 2.4)
                            q₄ * v(x, ymin, t)
 
     # Initial conditions
-    u₀ = @inline function (x, y)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * 4.0
-    end
-    ∂ₓu₀ = @inline function (x, y)
-        ya = y^a
-        xa_minus_1 = x^a_minus_1
-        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
-    end
-    ∂ᵧu₀ = @inline function (x, y)
-        xa = x^a
-        ya_minus_1 = y^a_minus_1
-        return (xa - x) * (a * ya_minus_1) * 4.0
-    end
+    u₀ = @inline (x, y) -> (x^a - x) * (y^a - 1.0) * 4.0
+    ∂ₓu₀ = @inline (x, y) -> (a * x^a_minus_1 - 1.0) * (y^a - 1.0) * 4.0
+    ∂ᵧu₀ = @inline (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4.0
     v₀ = @inline (x, y) -> 0.0
     ∂ₓv₀ = @inline (x, y) -> 0.0
     ∂ᵧv₀ = @inline (x, y) -> 0.0
@@ -536,29 +442,17 @@ function example2_zero_source(a::Float64 = 2.4)
         return 4.0 * s_abs3
     end
 
-    g = @inline (x, s) -> (1.0 + exp(-x * x)) * s
-    ∂ₛg = @inline (x, s) -> 1.0 + exp(-x * x)
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * muladd(2.0, s, sin(s))
+    ∂ₛg = @inline (x, s) -> (1.0 + exp(-x * x)) * (2.0 + cos(s))
 
-    # Zero source terms
+    # Zero source terms (pure initial-boundary value problem)
     f₁ = @inline (x, y, t) -> 0.0
     f₂ = @inline (x, t) -> 0.0
 
     # Initial conditions
-    u₀ = @inline function (x, y)
-        xa = x^a
-        ya = y^a
-        return (xa - x) * (ya - 1.0) * 4.0
-    end
-    ∂ₓu₀ = @inline function (x, y)
-        ya = y^a
-        xa_minus_1 = x^a_minus_1
-        return (a * xa_minus_1 - 1.0) * (ya - 1.0) * 4.0
-    end
-    ∂ᵧu₀ = @inline function (x, y)
-        xa = x^a
-        ya_minus_1 = y^a_minus_1
-        return (xa - x) * (a * ya_minus_1) * 4.0
-    end
+    u₀ = @inline (x, y) -> (x^a - x) * (y^a - 1.0) * 4.0
+    ∂ₓu₀ = @inline (x, y) -> (a * x^a_minus_1 - 1.0) * (y^a - 1.0) * 4.0
+    ∂ᵧu₀ = @inline (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4.0
     v₀ = @inline (x, y) -> 0.0
     ∂ₓv₀ = @inline (x, y) -> 0.0
     ∂ᵧv₀ = @inline (x, y) -> 0.0
@@ -567,6 +461,148 @@ function example2_zero_source(a::Float64 = 2.4)
 
     return PDEInputData(
         "example2_zero_source($a)",
+        (0.0, ymin),
+        (1.0, 1.0),
+        q₁, q₂, q₃, q₄,
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        nothing, nothing, nothing, nothing
+    )
+end
+
+# ============================================================================
+# Example 3: Linear Test Case
+# ============================================================================
+"""
+    example3_manufactured(a::Float64=2.4) -> PDEInputData
+
+Manufactured solution with ``g(x,s) = (1+e^{-x^2})s`` and ``f(s) = 0``:
+```math
+\\begin{alignat*}{2}
+& u(x,y,t)   &&= (x^a - x)(y^a - 1)(4 + t^2), \\\\
+& z(x,t)     &&= \\sin(\\pi x) - (1+e^{-x^2})(x^a-x)t^2,
+\\end{alignat*}
+```
+where the acoustic displacement ``z(x,t)`` is obtained by integrating
+```math
+\\frac{∂z}{∂t}(x,t) = -\\frac{∂u}{∂y}(x,y_{\\min},t) + g\\!\\left(x,\\,\\frac{∂u}{∂t}(x,y_{\\min},t)\\right).
+```
+
+# Arguments
+- `a::Float64=2.4`: Smoothness parameter controlling solution regularity.
+
+# Returns
+`PDEInputData` with analytical solution for convergence study.
+"""
+function example3_manufactured(a::Float64 = 2.4)
+    # Precompute exponent-related constants
+    a_minus_1 = a - 1.0
+    a_minus_2 = a - 2.0
+    axa_minus_1 = a * a_minus_1
+
+    # Physical parameters
+    q₁ = q₂ = q₃ = q₄ = 1.0
+    ymin = 0.0
+
+    # Coefficient functions
+    α = @inline t -> 1.0 + exp(-t)
+
+    f = @inline s -> 0.0
+    df = @inline s -> 0.0
+
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * s
+    ∂ₛg = @inline (x, s) -> 1.0 + exp(-x * x)
+
+    # Analytical solutions
+    u = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * (4.0 + t * t)
+    v = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * (2.0 * t)
+
+    z = @inline (x, t) -> sinpi(x) - (1.0 + exp(-x * x)) * (x^a - x) * (t * t)
+    r = @inline (x, t) -> -(1.0 + exp(-x * x)) * (x^a - x) * (2.0 * t)
+
+    # Auxiliary functions for manufactured source terms
+    ∂ₜₜu = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * 2.0
+    Δu = @inline (x, y, t) -> ((axa_minus_1 * x^a_minus_2) * (y^a - 1.0) +
+                               (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
+    ∂ₜₜz = @inline (x, t) -> -2.0 * (1.0 + exp(-x * x)) * (x^a - x)
+
+    # Manufactured source terms
+    f₁ = @inline (x, y, t) -> ∂ₜₜu(x, y, t) - α(t) * Δu(x, y, t) + f(u(x, y, t))
+    f₂ = @inline (x, t) -> q₁ * ∂ₜₜz(x, t) + q₂ * r(x, t) + q₃ * z(x, t) +
+                           q₄ * v(x, ymin, t)
+
+    # Initial conditions
+    u₀ = @inline (x, y) -> (x^a - x) * (y^a - 1.0) * 4.0
+    ∂ₓu₀ = @inline (x, y) -> (a * x^a_minus_1 - 1.0) * (y^a - 1.0) * 4.0
+    ∂ᵧu₀ = @inline (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4.0
+    v₀ = @inline (x, y) -> 0.0
+    ∂ₓv₀ = @inline (x, y) -> 0.0
+    ∂ᵧv₀ = @inline (x, y) -> 0.0
+    z₀ = @inline x -> sinpi(x)
+    r₀ = @inline x -> 0.0
+
+    return PDEInputData(
+        "example3_manufactured($a)",
+        (0.0, ymin),
+        (1.0, 1.0),
+        q₁, q₂, q₃, q₄,
+        α, f, df, g, ∂ₛg,
+        u₀, ∂ₓu₀, ∂ᵧu₀,
+        v₀, ∂ₓv₀, ∂ᵧv₀,
+        z₀, r₀,
+        f₁, f₂,
+        u, v, z, r
+    )
+end
+
+"""
+    example3_zero_source(a::Float64=2.4) -> PDEInputData
+
+Same configuration as `example3_manufactured` but with f₁ = f₂ = 0.
+No analytical solution available.
+
+# Arguments
+- `a::Float64=2.4`: Smoothness parameter for initial conditions.
+
+# Returns
+`PDEInputData` with analytical solutions set to `nothing`.
+"""
+function example3_zero_source(a::Float64 = 2.4)
+    # Precompute exponent-related constants
+    a_minus_1 = a - 1.0
+
+    # Physical parameters
+    q₁ = q₂ = q₃ = q₄ = 1.0
+    ymin = 0.0
+
+    # Coefficient functions
+    α = @inline t -> 1.0 + exp(-t)
+
+    f = @inline s -> 0.0
+    df = @inline s -> 0.0
+
+    g = @inline (x, s) -> (1.0 + exp(-x * x)) * s
+    ∂ₛg = @inline (x, s) -> 1.0 + exp(-x * x)
+
+    # Zero source terms
+    f₁ = @inline (x, y, t) -> 0.0
+    f₂ = @inline (x, t) -> 0.0
+
+    # Initial conditions
+    u₀ = @inline (x, y) -> (x^a - x) * (y^a - 1.0) * 4.0
+    ∂ₓu₀ = @inline (x, y) -> (a * x^a_minus_1 - 1.0) * (y^a - 1.0) * 4.0
+    ∂ᵧu₀ = @inline (x, y) -> (x^a - x) * (a * y^a_minus_1) * 4.0
+    v₀ = @inline (x, y) -> 0.0
+    ∂ₓv₀ = @inline (x, y) -> 0.0
+    ∂ᵧv₀ = @inline (x, y) -> 0.0
+    z₀ = @inline x -> sinpi(x)
+    r₀ = @inline x -> 0.0
+
+    return PDEInputData(
+        "example3_zero_source($a)",
         (0.0, ymin),
         (1.0, 1.0),
         q₁, q₂, q₃, q₄,
