@@ -61,7 +61,7 @@ Construct a `QuadratureSetup` for given 1D and 2D finite element families.
 - `fe2D::DimensionalFEFamily`: 2D element family (e.g. `LagrangeElement{2,1}()`)
 - `Δx::NTuple{2,T}`: Element sizes `(Δx, Δy)`
 - `pmin::NTuple{2,T}`: Bottom-left corner of the domain `(xmin, ymin)`
-- `::Val{Npg}`: Number of Gauss–Legendre points per dimension (default: `Val(4)`)
+- `::Val{Npg}`: Number of Gauss–Legendre points per dimension (default: `Val(5)`)
 - `::Val{Nb}`: Number of local DOFs per element in 1D; inferred automatically from `fe1D`. Do not pass explicitly.
 - `::Val{Nb2}`: Number of local DOFs per element in 2D; inferred automatically from `fe2D`. Do not pass explicitly.
 
@@ -72,7 +72,7 @@ julia> using WaveAcoustics: QuadratureSetup, LagrangeElement
 julia> quad = QuadratureSetup(LagrangeElement{1,1}(), LagrangeElement{2,1}(), (0.1, 0.2), (0.0, 0.0));
 
 julia> length(quad.xP)
-4
+5
 ```
 """
 function QuadratureSetup(
