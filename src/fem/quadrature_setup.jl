@@ -80,7 +80,7 @@ function QuadratureSetup(
         fe2D::DimensionalFEFamily,
         Δx::NTuple{2, T},
         pmin::NTuple{2, T},
-        ::Val{Npg} = Val(4),
+        ::Val{Npg} = Val(5),
         ::Val{Nb} = num_local_dof_static(fe1D),
         ::Val{Nb2} = num_local_dof_static(fe2D)
 ) where {T <: Real, Npg, Nb, Nb2}
