@@ -204,7 +204,7 @@ function example1_manufactured(a::Float64 = 2.4)
     # Auxiliary functions for manufactured source terms
     ∂ₜₜu = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * 2.0
     Δu = @inline (x, y, t) -> ((axa_minus_1 * x^a_minus_2) * (y^a - 1.0) +
-                               (xa - x) * (a^xa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
+                               (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
     ∂ₜₜz = @inline function (x, t)
         xa_minus_x = x^a - x
         exp_term = 1.0 + exp(-x * x)
@@ -372,7 +372,7 @@ function example2_manufactured(a::Float64 = 2.4)
     # Auxiliary functions for manufactured source terms
     ∂ₜₜu = @inline (x, y, t) -> (x^a - x) * (y^a - 1.0) * 2.0
     Δu = @inline (x, y, t) -> ((axa_minus_1 * x^a_minus_2) * (y^a - 1.0) +
-                               (xa - x) * (a^xa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
+                               (x^a - x) * (axa_minus_1 * y^a_minus_2)) * (4.0 + t * t)
     ∂ₜₜz = @inline function (x, t)
         xa_minus_x = x^a - x
         exp_term = 1.0 + exp(-x * x)
