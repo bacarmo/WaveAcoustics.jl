@@ -144,7 +144,7 @@ end
     example1_manufactured(a::Float64=2.4) -> PDEInputData
 
 Manufactured solution with
-``g(x, s) = (1 + e^{-x^2})(\\sin(s) + 2s)`` and ``f(s) = \\arctan(s)\\``:
+``g(x, s) = (1 + e^{-x^2})(\\sin(s) + 2s)`` and ``f(s) = \\arctan(s)``:
 ```math
 \\begin{alignat*}{2}
 & u(x,y,t)   &&= (x^a - x)(y^a - 1)(4 + t^2), \\\\
