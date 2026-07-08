@@ -1009,7 +1009,7 @@ version = "1.11.0"
 deps = ["Dates", "FEM", "GaussQuadrature", "InteractiveUtils", "LinearAlgebra", "LinearSolve", "Printf", "SparseArrays", "StaticArrays"]
 path = "."
 uuid = "015e6fd1-d146-4073-8025-2809e47f770e"
-version = "0.2.0"
+version = "0.3.0"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
