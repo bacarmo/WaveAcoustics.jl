@@ -17,16 +17,18 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "Model" => "theory/model.md",
+        "Model" => "model.md",
         "Approximation Problem" => [
-            "methods/method1.md",
-            "methods/method2.md"
+            "schemes/scheme1.md",
+            "schemes/scheme2.md",
+            "schemes/scheme3.md"
         ],
-        "Examples" => [
-            "Example 1" => "examples/example1.md",
-            "Example 2" => "examples/example2.md"
+        "Numerical Results" => [
+            "numerical_results/scheme1.md",
+            "numerical_results/scheme2.md",
+            "numerical_results/scheme3.md"
         ],
-        "API" => "api/api.md"
+        "API" => "api.md"
     ]
 )
 
