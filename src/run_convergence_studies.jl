@@ -10,7 +10,8 @@ Fields
 - `τ`     : time-step size at each level
 - `errors`: L∞(L²) error norms; size `(n_levels, n_fields)`
 - `rates` : convergence rates, computed as log(eᵢ₋₁/eᵢ)/log(δᵢ₋₁/δᵢ), where δ denotes the refinement parameter: δ = h for 2D spatial studies, δ = Δx for 1D spatial studies, and δ = τ for temporal studies; same size as `errors`
-"""
+- `walltime` : wall-clock time (s) of each PDE solve, one entry per refinement level
+    """
 struct ConvergenceResults{T <: AbstractFloat, I <: Integer}
     info::String
     Nx::Vector{I}
@@ -18,6 +19,7 @@ struct ConvergenceResults{T <: AbstractFloat, I <: Integer}
     τ::Vector{T}
     errors::Matrix{T}  # (n_levels, n_fields)
     rates::Matrix{T}   # (n_levels, n_fields); first row is always zero
+    walltime::Vector{Float64}# (n_levels,)
 end
 
 """
@@ -159,7 +161,7 @@ function run_convergence_study(
     rates = zeros(n_levels, n_fields)
     h_values = zeros(n_levels)
     Δx_values = zeros(n_levels)
-    times = zeros(n_levels)
+    walltime = zeros(n_levels)
 
     for i in 1:n_levels
         Δx, Δy = (pmax .- pmin) ./ (Nx[i], Nx[i])
@@ -168,7 +170,7 @@ function run_convergence_study(
 
         tspan = 0.0:τ[i]:t_end
         callback = L2ErrorCallback(tspan)
-        times[i] = @elapsed solve_pde(fe, (Nx[i], Nx[i]), tspan, id, solver, callback)
+        walltime[i] = @elapsed solve_pde(fe, (Nx[i], Nx[i]), tspan, id, solver, callback)
         errors[i, 1] = maximum(callback.v_errors)
         errors[i, 2] = maximum(callback.d_errors)
         errors[i, 3] = maximum(callback.r_errors)
@@ -185,13 +187,13 @@ function run_convergence_study(
     compute_rates!(view(rates, :, 1:2), view(errors, :, 1:2), δ_2D)
     compute_rates!(view(rates, :, 3:4), view(errors, :, 3:4), δ_1D)
 
-    total_time = sum(times)
+    total_time = sum(walltime)
     time_str = total_time ≥ 1.0 ? @sprintf("%.2f s", total_time) :
                @sprintf("%.1f ms", total_time*1e3)
 
     info = string(
-        "ConvergenceResults: t_end=", t_end, ", ", id.name, ", ", fe, ", ", solver, ", elapsed=", time_str)
-    return ConvergenceResults(info, Nx, h_values, τ, errors, rates)
+        "ConvergenceResults: t_end=", t_end, ", ", id.name, ", ", fe, ", ", solver, ", sum(walltime)=", time_str)
+    return ConvergenceResults(info, Nx, h_values, τ, errors, rates, walltime)
 end
 
 # Convenience overloads: fix Nx, vary τ (temporal study); or fix τ, vary Nx (spatial study)
@@ -236,12 +238,13 @@ function Base.show(io::IO, r::ConvergenceResults)
     n_levels, n_fields = size(r.errors)
     println(io, r.info)
     println(io,
-        "  Nx   log₂h   log₂τ    L∞L²_V    rate     L∞L²_U    rate     L∞L²_R    rate     L∞L²_Z    rate")
+        "  Nx   log₂h   log₂τ    L∞L²_V    rate    L∞L²_U    rate    L∞L²_R    rate    L∞L²_Z    rate    walltime[s]")
     for i in 1:n_levels
         row = @sprintf("%4d  %6.2f  %6.2f", r.Nx[i], log2(r.h[i]), log2(r.τ[i]))
         for j in 1:n_fields
-            row *= @sprintf("    %.2e % .3f", r.errors[i, j], r.rates[i, j])
+            row *= @sprintf("    %.2e % .2f", r.errors[i, j], r.rates[i, j])
         end
+        row *= @sprintf("    %.4e", r.walltime[i])
         println(io, row)
     end
 end
