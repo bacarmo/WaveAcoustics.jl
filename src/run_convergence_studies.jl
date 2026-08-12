@@ -155,7 +155,7 @@ function run_convergence_study(
     pmin, pmax = id.pmin, id.pmax
 
     n_levels = length(Nx)
-    n_fields = 4 # (v, d, r, z)
+    n_fields = 6 # (v, d, r, z, v_d, r_z)
 
     errors = zeros(n_levels, n_fields)
     rates = zeros(n_levels, n_fields)
@@ -175,6 +175,8 @@ function run_convergence_study(
         errors[i, 2] = maximum(callback.d_errors)
         errors[i, 3] = maximum(callback.r_errors)
         errors[i, 4] = maximum(callback.z_errors)
+        errors[i, 5] = maximum(callback.v_errors+callback.d_errors)
+        errors[i, 6] = maximum(callback.r_errors+callback.z_errors)
     end
 
     # Refinement mode determines δ 
@@ -184,8 +186,8 @@ function run_convergence_study(
     δ_2D = temporal ? τ : h_values
     δ_1D = temporal ? τ : Δx_values
 
-    compute_rates!(view(rates, :, 1:2), view(errors, :, 1:2), δ_2D)
-    compute_rates!(view(rates, :, 3:4), view(errors, :, 3:4), δ_1D)
+    compute_rates!(view(rates, :, [1, 2, 5]), view(errors, :, [1, 2, 5]), δ_2D)
+    compute_rates!(view(rates, :, [3, 4, 6]), view(errors, :, [3, 4, 6]), δ_1D)
 
     total_time = sum(walltime)
     time_str = total_time ≥ 1.0 ? @sprintf("%.2f s", total_time) :
@@ -238,7 +240,7 @@ function Base.show(io::IO, r::ConvergenceResults)
     n_levels, n_fields = size(r.errors)
     println(io, r.info)
     println(io,
-        "  Nx   log₂h   log₂τ    L∞L²_V    rate    L∞L²_U    rate    L∞L²_R    rate    L∞L²_Z    rate    walltime[s]")
+        "  Nx   log₂h   log₂τ    L∞L²_V    rate    L∞L²_U    rate    L∞L²_R    rate    L∞L²_Z    rate    L∞L²_VU   rate    L∞L²_RZ   rate    walltime[s]")
     for i in 1:n_levels
         row = @sprintf("%4d  %6.2f  %6.2f", r.Nx[i], log2(r.h[i]), log2(r.τ[i]))
         for j in 1:n_fields
