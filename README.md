@@ -22,8 +22,8 @@ abstract = {In this article, we present an error estimation in the L2 norm refer
 This repository can be cited as
 ```bibtex
 @software{WaveAcoustics,
-author    = {Bruno A. Carmo},
-title     = {{WaveAcoustics.jl}: Numerical solution for a nonlinear wave equation with boundary conditions: Dirichlet, Acoustics, and Impenetrability},
+author    = {Bruno Alves do Carmo},
+title     = {Numerical solution for a nonlinear wave equation with boundary conditions: Dirichlet, Acoustics, and Impenetrability},
 version   = {v0.4},
 year      = {2026},
 publisher = {Zenodo},
