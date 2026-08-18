@@ -27,7 +27,7 @@ title     = {Numerical solution for a nonlinear wave equation with boundary cond
 version   = {v0.4},
 year      = {2026},
 publisher = {Zenodo},
-doi       = {10.5281/zenodo.21984456},
-url       = {https://doi.org/10.5281/zenodo.21984456}
+doi       = {10.5281/zenodo.21984457},
+url       = {https://doi.org/10.5281/zenodo.21984457}
 }
 ```
