@@ -1,4 +1,9 @@
-# WaveAcoustics [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://bacarmo.github.io/WaveAcoustics.jl/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://bacarmo.github.io/WaveAcoustics.jl/dev/) [![Build Status](https://github.com/bacarmo/WaveAcoustics.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/bacarmo/WaveAcoustics.jl/actions/workflows/CI.yml?query=branch%3Amain)[![DOI](https://zenodo.org/badge/1113335794.svg)](https://doi.org/10.5281/zenodo.21984456)
+# WaveAcoustics 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://bacarmo.github.io/WaveAcoustics.jl/stable/) 
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://bacarmo.github.io/WaveAcoustics.jl/dev/) 
+[![Build Status](https://github.com/bacarmo/WaveAcoustics.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/bacarmo/WaveAcoustics.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/1113335794.svg)](https://doi.org/10.5281/zenodo.21984456)
 
 This repository contains a Julia implementation of the numerical scheme presented in the article "Numerical analysis for nonlinear wave equations with boundary conditions: Dirichlet, Acoustics and Impenetrability".
 The results presented in the paper were obtained using MATLAB source code.
@@ -31,3 +36,20 @@ doi       = {10.5281/zenodo.21984457},
 url       = {https://doi.org/10.5281/zenodo.21984457}
 }
 ```
+
+## Declarations
+### Acknowledgment 
+This work was supported by CNPq - National Council for Scientific and Technological Development (Grant Number 151197/2025-3).
+
+### AI use disclosure statement
+In compliance with CNPq Portaria nº 2.664/2026 (Política de Integridade na Atividade Científica do CNPq), the following is disclosed.
+
+During the implementation and documentation phase of the package, the author (B. A. Carmo) used Claude (Anthropic, free browser-based chat; exact model version not fixed) to: 
+(i) review selected code sections to identify and fix bugs;
+(ii) suggest more idiomatic or efficient Julia implementations;
+(iii) refine docstrings and documentation text.
+No IDE autocomplete or local AI agent was used.
+All suggestions were reviewed by the author, who is fully responsible for the final code and results.
+
+### Disclaimer
+Everything is provided as is and without warranty. Use at your own risk.
